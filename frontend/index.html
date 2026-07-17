@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Tour-resQ — Safe Travel Companion">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Tour-resQ — Safety & Assistive UI</title>
+    
+    <!-- Ultra-legible fonts for accessibility -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+    <div id="app-container" class="app-container">
+        
+        <!-- Blackbox Recording Indicator (Hidden by default) -->
+        <div id="blackbox-indicator" class="blackbox-indicator">
+            <span class="rec-dot"></span> REC
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 1. SCANNER TAB (Camera-First, Be My Eyes Style) -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div id="tab-scanner" class="tab-content active">
+            <div class="camera-layer">
+                <!-- Mock camera feed -->
+                <img src="hero.png" alt="Camera Feed" class="mock-camera-bg">
+                <div class="camera-overlay">
+                    <div class="focus-frame">
+                        <div class="corner t-l"></div><div class="corner t-r"></div>
+                        <div class="corner b-l"></div><div class="corner b-r"></div>
+                        <div class="scan-laser"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="assistive-header">
+                <h1 data-i18n="nav.price_check">Price Scanner</h1>
+                <p data-i18n="price.instruction">Point camera at menus or receipts</p>
+            </div>
+
+            <div class="assistive-controls">
+                <button class="btn-giant-action btn-neon-green" onclick="document.getElementById('price-camera').click()">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <span data-i18n="action.scan">SCAN NOW</span>
+                </button>
+                <input type="file" id="price-camera" accept="image/*" capture="environment" onchange="handlePricePhoto(event)" hidden>
+            </div>
+
+            <!-- Overlay for Results -->
+            <div id="price-results-overlay" class="results-overlay" style="display:none">
+                <div class="results-card high-contrast tier-overpriced">
+                    <h2 class="alert-title" id="scan-alert-title">OVERPRICED</h2>
+                    <div class="alert-price" id="scan-alert-price">120,000 ₫</div>
+                    
+                    <!-- Vision Forgery Warning Box (Hidden by default) -->
+                    <div id="vision-forgery-warning" class="vision-warning-box" style="display:none">
+                        <strong>⚠️ DOUBLE MENU DETECTED</strong>
+                        <p id="vision-reason">Layout analysis shows English prices are significantly higher.</p>
+                    </div>
+                    
+                    <p class="alert-msg" id="scan-alert-msg">Normal price is around 45,000 ₫.</p>
+                    <button class="btn-giant-close" onclick="closePriceResults()">DISMISS</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 2. TRANSLATE TAB (Split-Screen, Papago Style) -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div id="tab-translate" class="tab-content">
+            <div class="split-screen-container">
+                <!-- Top Half (Rotated 180 for the vendor) -->
+                <div class="split-half half-vendor rotated-180">
+                    <div class="lang-label">Tiếng Việt</div>
+                    <div class="text-display" id="vendor-text">Xin chào, bát phở này giá bao nhiêu?</div>
+                    <button class="btn-giant-mic mic-vendor" onclick="toggleVendorMic()">
+                        <div class="mic-ripple"></div>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    </button>
+                    <!-- Audio Wave Visualizer -->
+                    <div class="audio-waves wave-vendor" style="display:none">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+
+                <!-- Bottom Half (Normal for the tourist) -->
+                <div class="split-half half-tourist">
+                    <div class="lang-label">English</div>
+                    <div class="text-display" id="tourist-text">Hello, how much is this bowl of pho?</div>
+                    <button class="btn-giant-mic mic-tourist" onclick="toggleTouristMic()">
+                        <div class="mic-ripple"></div>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    </button>
+                    <!-- Audio Wave Visualizer -->
+                    <div class="audio-waves wave-tourist" style="display:none">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 3. GUARDIAN TAB (Safety Listening) -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div id="tab-guardian" class="tab-content">
+            <div class="guardian-layout">
+                <div class="guardian-header">
+                    <h1 data-i18n="nav.scam_help">The Guardian</h1>
+                    <p>Describe your situation. AI will detect scams.</p>
+                </div>
+
+                <div class="radar-container">
+                    <div class="radar-ping"></div>
+                    <div class="radar-ping delay"></div>
+                    <button class="btn-giant-radar" id="guardian-mic" onclick="toggleGuardian()">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    </button>
+                    <div class="guardian-status" id="guardian-status-text">TAP TO LISTEN</div>
+                </div>
+
+                <div class="text-input-fallback">
+                    <textarea class="giant-textarea" placeholder="Or type what happened..."></textarea>
+                    <button class="btn-secondary-giant" onclick="analyzeScam()">ANALYZE TEXT</button>
+                </div>
+                
+                <!-- Overlay for Results -->
+                <div id="scam-results-overlay" class="results-overlay" style="display:none">
+                    <div id="guardian-result-card" class="results-card high-contrast tier-danger">
+                        <h2 class="alert-title" id="guardian-alert-title">SCAM ALERT</h2>
+                        <p class="alert-msg" id="guardian-alert-msg">Exit the vehicle if possible. Only use Grab or branded taxis.</p>
+                        
+                        <!-- Auto-Dispatch Card -->
+                        <div id="auto-dispatch-box" class="vision-warning-box" style="display:none; border-color: var(--neon-green); background: rgba(0, 255, 102, 0.1);">
+                            <strong style="color:var(--neon-green)">EVIDENCE SECURED</strong>
+                            <p id="dispatch-auth-name" style="margin-bottom: 1rem;">Nearest Authority: Cong An Phuong Hang Bac (0.3km)</p>
+                            <button class="btn-secondary-giant" style="background: var(--neon-green); color: black;" onclick="dispatchReport()">DISPATCH REPORT</button>
+                            <p id="dispatch-status-msg" style="color:var(--neon-green); font-size:0.9rem; margin-top:0.5rem; text-align: center; font-weight: bold;"></p>
+                        </div>
+                        
+                        <button class="btn-giant-close" style="margin-top: 1rem;" onclick="closeScamResults()">DISMISS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- 4. SOS TAB (Citizen Style & Slide to SOS) -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div id="tab-sos" class="tab-content sos-theme">
+            <!-- Dark map background -->
+            <div class="map-bg"></div>
+            
+            <!-- Heatmap Overlay -->
+            <div id="heatmap-layer" class="heatmap-layer">
+                <div class="heat-node" style="top: 30%; left: 40%;"></div>
+                <div class="heat-node critical" style="top: 60%; left: 70%;"></div>
+                <div class="heat-node" style="top: 80%; left: 20%;"></div>
+            </div>
+            
+            <div class="sos-layout">
+                <div class="sos-header">
+                    <div class="pulse-dot"></div>
+                    <h1 data-i18n="nav.sos">Emergency Hub</h1>
+                </div>
+                
+                <div class="heatmap-warning">
+                    ⚠️ <strong>High Risk Area</strong>: 12 recent extortion reports nearby.
+                </div>
+
+                <div class="location-card">
+                    <p class="label">CURRENT LOCATION</p>
+                    <h2 class="coords">21.0285° N, 105.8542° E</h2>
+                    <p class="address">Hoan Kiem Lake, Hanoi</p>
+                </div>
+
+                <div class="contacts-grid">
+                    <a href="tel:113" class="giant-contact-btn police">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                        <div class="text">
+                            <span>POLICE</span>
+                            <strong>113</strong>
+                        </div>
+                    </a>
+                    <a href="tel:19006068" class="giant-contact-btn tourism">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                        <div class="text">
+                            <span>TOURISM</span>
+                            <strong>1900 6068</strong>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- SLIDE TO SOS WIDGET -->
+                <div class="slide-to-sos-wrapper">
+                    <div class="slide-track">
+                        <span class="slide-text">SLIDE TO SOS</span>
+                        <div class="slide-knob" id="sos-knob">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="sos-dispatch-status" class="dispatch-status"></div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- BOTTOM TAB BAR -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <nav class="bottom-tab-bar">
+            <button class="tab-item active" onclick="switchTab('tab-scanner')">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span>Scanner</span>
+            </button>
+            <button class="tab-item" onclick="switchTab('tab-translate')">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+                <span>Translate</span>
+            </button>
+            <button class="tab-item" onclick="switchTab('tab-guardian')">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="3"/></svg>
+                <span>Guardian</span>
+            </button>
+            <button class="tab-item alert-tab" onclick="switchTab('tab-sos')">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4"/><circle cx="12" cy="17" r="1"/></svg>
+                <span>SOS</span>
+            </button>
+        </nav>
+
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

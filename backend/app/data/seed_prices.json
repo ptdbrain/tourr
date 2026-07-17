@@ -1,0 +1,130 @@
+[
+  {"region":"hanoi","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":35000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":40000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":50000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":60000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":75000,"venue_type":"tourist_area","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":85000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hanoi","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":15000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":20000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":25000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":35000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":45000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hanoi","category":"food","item_name":"bun_cha","item_name_vi":"bún chả","price_vnd":35000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"bun_cha","item_name_vi":"bún chả","price_vnd":45000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"bun_cha","item_name_vi":"bún chả","price_vnd":55000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"bun_cha","item_name_vi":"bún chả","price_vnd":70000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"bun_cha","item_name_vi":"bún chả","price_vnd":85000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hanoi","category":"food","item_name":"com_rang","item_name_vi":"cơm rang","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"com_rang","item_name_vi":"cơm rang","price_vnd":40000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"com_rang","item_name_vi":"cơm rang","price_vnd":55000,"venue_type":"restaurant","source":"seed"},
+
+  {"region":"hanoi","category":"food","item_name":"spring_rolls","item_name_vi":"nem rán","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"spring_rolls","item_name_vi":"nem rán","price_vnd":50000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hanoi","category":"food","item_name":"spring_rolls","item_name_vi":"nem rán","price_vnd":70000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hanoi","category":"drink","item_name":"beer_local","item_name_vi":"bia hơi","price_vnd":8000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"beer_local","item_name_vi":"bia hơi","price_vnd":12000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"beer_local","item_name_vi":"bia hơi","price_vnd":25000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"beer_local","item_name_vi":"bia hơi","price_vnd":40000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hanoi","category":"drink","item_name":"beer_imported","item_name_vi":"bia ngoại","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"beer_imported","item_name_vi":"bia ngoại","price_vnd":50000,"venue_type":"restaurant","source":"seed"},
+
+  {"region":"hanoi","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":15000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":25000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":40000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":55000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hanoi","category":"drink","item_name":"water_bottle","item_name_vi":"nước suối","price_vnd":5000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"water_bottle","item_name_vi":"nước suối","price_vnd":8000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"water_bottle","item_name_vi":"nước suối","price_vnd":15000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hanoi","category":"drink","item_name":"smoothie","item_name_vi":"sinh tố","price_vnd":20000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"drink","item_name":"smoothie","item_name_vi":"sinh tố","price_vnd":35000,"venue_type":"restaurant","source":"seed"},
+
+  {"region":"hanoi","category":"transport","item_name":"taxi_per_km","item_name_vi":"taxi/km","price_vnd":12000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"transport","item_name":"taxi_per_km","item_name_vi":"taxi/km","price_vnd":14000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"transport","item_name":"taxi_per_km","item_name_vi":"taxi/km","price_vnd":15000,"venue_type":"street","source":"seed"},
+
+  {"region":"hanoi","category":"transport","item_name":"grab_bike_per_km","item_name_vi":"grab bike/km","price_vnd":4000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"transport","item_name":"grab_bike_per_km","item_name_vi":"grab bike/km","price_vnd":5500,"venue_type":"street","source":"seed"},
+
+  {"region":"hanoi","category":"transport","item_name":"airport_taxi","item_name_vi":"taxi sân bay","price_vnd":300000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"transport","item_name":"airport_taxi","item_name_vi":"taxi sân bay","price_vnd":380000,"venue_type":"street","source":"seed"},
+  {"region":"hanoi","category":"transport","item_name":"airport_taxi","item_name_vi":"taxi sân bay","price_vnd":420000,"venue_type":"street","source":"seed"},
+
+  {"region":"hcmc","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":40000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":45000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":55000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":70000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":90000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hcmc","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":20000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":28000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":40000,"venue_type":"restaurant","source":"seed"},
+
+  {"region":"hcmc","category":"food","item_name":"com_tam","item_name_vi":"cơm tấm","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"com_tam","item_name_vi":"cơm tấm","price_vnd":40000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"com_tam","item_name_vi":"cơm tấm","price_vnd":55000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hcmc","category":"food","item_name":"com_tam","item_name_vi":"cơm tấm","price_vnd":75000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"hcmc","category":"drink","item_name":"beer_local","item_name_vi":"bia","price_vnd":12000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"drink","item_name":"beer_local","item_name_vi":"bia","price_vnd":20000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hcmc","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":20000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":50000,"venue_type":"restaurant","source":"seed"},
+
+  {"region":"hcmc","category":"transport","item_name":"taxi_per_km","item_name_vi":"taxi/km","price_vnd":13000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"transport","item_name":"taxi_per_km","item_name_vi":"taxi/km","price_vnd":16000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"transport","item_name":"airport_taxi","item_name_vi":"taxi sân bay","price_vnd":200000,"venue_type":"street","source":"seed"},
+  {"region":"hcmc","category":"transport","item_name":"airport_taxi","item_name_vi":"taxi sân bay","price_vnd":280000,"venue_type":"street","source":"seed"},
+
+  {"region":"danang","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":35000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":50000,"venue_type":"restaurant","source":"seed"},
+  {"region":"danang","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":65000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"danang","category":"food","item_name":"mi_quang","item_name_vi":"mì Quảng","price_vnd":25000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"food","item_name":"mi_quang","item_name_vi":"mì Quảng","price_vnd":35000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"food","item_name":"mi_quang","item_name_vi":"mì Quảng","price_vnd":50000,"venue_type":"restaurant","source":"seed"},
+
+  {"region":"danang","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":15000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":22000,"venue_type":"street","source":"seed"},
+
+  {"region":"danang","category":"food","item_name":"seafood_plate","item_name_vi":"hải sản","price_vnd":120000,"venue_type":"restaurant","source":"seed"},
+  {"region":"danang","category":"food","item_name":"seafood_plate","item_name_vi":"hải sản","price_vnd":180000,"venue_type":"restaurant","source":"seed"},
+  {"region":"danang","category":"food","item_name":"seafood_plate","item_name_vi":"hải sản","price_vnd":250000,"venue_type":"tourist_area","source":"seed"},
+  {"region":"danang","category":"food","item_name":"seafood_plate","item_name_vi":"hải sản","price_vnd":350000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"danang","category":"drink","item_name":"beer_local","item_name_vi":"bia","price_vnd":10000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"drink","item_name":"beer_local","item_name_vi":"bia","price_vnd":15000,"venue_type":"restaurant","source":"seed"},
+  {"region":"danang","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":15000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":25000,"venue_type":"street","source":"seed"},
+
+  {"region":"danang","category":"transport","item_name":"taxi_per_km","item_name_vi":"taxi/km","price_vnd":11000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"transport","item_name":"taxi_per_km","item_name_vi":"taxi/km","price_vnd":14000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"transport","item_name":"airport_taxi","item_name_vi":"taxi sân bay","price_vnd":150000,"venue_type":"street","source":"seed"},
+  {"region":"danang","category":"transport","item_name":"airport_taxi","item_name_vi":"taxi sân bay","price_vnd":200000,"venue_type":"street","source":"seed"},
+
+  {"region":"nhatrang","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"nhatrang","category":"food","item_name":"pho","item_name_vi":"phở","price_vnd":45000,"venue_type":"restaurant","source":"seed"},
+  {"region":"nhatrang","category":"food","item_name":"seafood_plate","item_name_vi":"hải sản","price_vnd":150000,"venue_type":"restaurant","source":"seed"},
+  {"region":"nhatrang","category":"food","item_name":"seafood_plate","item_name_vi":"hải sản","price_vnd":200000,"venue_type":"restaurant","source":"seed"},
+  {"region":"nhatrang","category":"food","item_name":"seafood_plate","item_name_vi":"hải sản","price_vnd":400000,"venue_type":"tourist_area","source":"seed"},
+
+  {"region":"nhatrang","category":"drink","item_name":"beer_local","item_name_vi":"bia","price_vnd":12000,"venue_type":"street","source":"seed"},
+  {"region":"nhatrang","category":"drink","item_name":"coffee","item_name_vi":"cà phê","price_vnd":20000,"venue_type":"street","source":"seed"},
+
+  {"region":"nhatrang","category":"transport","item_name":"taxi_per_km","item_name_vi":"taxi/km","price_vnd":13000,"venue_type":"street","source":"seed"},
+
+  {"region":"hoian","category":"food","item_name":"cao_lau","item_name_vi":"cao lầu","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"hoian","category":"food","item_name":"cao_lau","item_name_vi":"cao lầu","price_vnd":45000,"venue_type":"restaurant","source":"seed"},
+  {"region":"hoian","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":20000,"venue_type":"street","source":"seed"},
+  {"region":"hoian","category":"food","item_name":"banh_mi","item_name_vi":"bánh mì","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"hoian","category":"food","item_name":"white_rose","item_name_vi":"hoa hồng trắng","price_vnd":30000,"venue_type":"street","source":"seed"},
+  {"region":"hoian","category":"food","item_name":"white_rose","item_name_vi":"hoa hồng trắng","price_vnd":50000,"venue_type":"restaurant","source":"seed"}
+]

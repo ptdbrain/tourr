@@ -1,0 +1,190 @@
+/* ═══════════════════════════════════════════════════════
+   Tour-resQ — Assistive & Safety-First CSS
+   ═══════════════════════════════════════════════════════ */
+
+/* ── 1. TOKENS & RESET ────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --bg-dark: #000000;
+    --bg-panel: #111111;
+    --bg-overlay: rgba(0,0,0,0.85);
+    
+    /* High Contrast Accessible Colors */
+    --neon-green: #00FF66;
+    --neon-green-dark: #00CC52;
+    --neon-yellow: #FFD600;
+    --neon-yellow-dark: #CCA800;
+    --danger-red: #FF1A1A;
+    --danger-red-dark: #CC0000;
+    --police-blue: #0066FF;
+    
+    --text-primary: #FFFFFF;
+    --text-secondary: #AAAAAA;
+    
+    --font-stack: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    
+    --nav-height: 80px;
+    --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+body.dark-theme { background: var(--bg-dark); color: var(--text-primary); font-family: var(--font-stack); overflow: hidden; }
+
+/* ── 2. APP CONTAINER & TAB SYSTEM ────────────────── */
+.app-container { width: 100%; height: 100dvh; display: flex; flex-direction: column; position: relative; }
+.tab-content { position: absolute; top: 0; left: 0; right: 0; bottom: var(--nav-height); display: none; opacity: 0; transition: opacity 0.3s ease; overflow-y: auto; overflow-x: hidden; }
+.tab-content.active { display: block; opacity: 1; }
+
+/* Bottom Tab Bar */
+.bottom-tab-bar { position: absolute; bottom: 0; left: 0; right: 0; height: var(--nav-height); background: #1A1A1A; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+.tab-item { flex: 1; background: transparent; border: none; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px 0; cursor: pointer; transition: 0.2s; }
+.tab-item span { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.tab-item.active { color: var(--text-primary); }
+.tab-item.active svg { stroke: var(--neon-green); filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); }
+.tab-item.alert-tab.active svg { stroke: var(--danger-red); filter: drop-shadow(0 0 8px rgba(255,26,26,0.4)); }
+
+/* ── 3. SCANNER TAB (Be My Eyes Style) ────────────── */
+#tab-scanner { display: flex; flex-direction: column; }
+.camera-layer { position: absolute; inset: 0; z-index: 1; background: #000; }
+.mock-camera-bg { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; filter: grayscale(20%); }
+.camera-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.focus-frame { width: 100%; aspect-ratio: 3/4; max-height: 60vh; position: relative; border: 2px solid rgba(255,255,255,0.2); }
+.focus-frame .corner { position: absolute; width: 40px; height: 40px; border: 4px solid var(--neon-green); }
+.focus-frame .t-l { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.focus-frame .t-r { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+.focus-frame .b-l { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+.focus-frame .b-r { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+.scan-laser { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); animation: laserScan 2.5s infinite alternate ease-in-out; }
+@keyframes laserScan { 0% { top: 5%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 95%; opacity: 0; } }
+
+.assistive-header { position: relative; z-index: 10; padding: 2rem 1.5rem; text-align: center; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); }
+.assistive-header h1 { font-size: 2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+.assistive-header p { font-size: 1.1rem; font-weight: 600; color: var(--neon-green); margin-top: 0.5rem; }
+
+.assistive-controls { position: absolute; bottom: 2rem; left: 0; right: 0; z-index: 10; display: flex; justify-content: center; padding: 0 2rem; }
+.btn-giant-action { width: 100%; max-width: 320px; padding: 1.25rem; border-radius: 20px; border: none; font-size: 1.5rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.1s; }
+.btn-giant-action:active { transform: scale(0.95); }
+.btn-neon-green { background: var(--neon-green); color: #000; }
+
+/* ── 4. TRANSLATE TAB (Split-Screen Papago) ───────── */
+.split-screen-container { display: flex; flex-direction: column; height: 100%; }
+.split-half { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; padding: 2rem; }
+.half-vendor { background: var(--danger-red-dark); color: white; }
+.half-tourist { background: var(--police-blue); color: white; border-top: 4px solid #000; }
+.rotated-180 { transform: rotate(180deg); }
+
+.lang-label { position: absolute; top: 1rem; left: 1.5rem; font-size: 1.2rem; font-weight: 800; opacity: 0.7; text-transform: uppercase; }
+.text-display { font-size: 2.2rem; font-weight: 800; text-align: center; line-height: 1.2; margin-bottom: 2rem; max-width: 90%; }
+
+.btn-giant-mic { width: 80px; height: 80px; border-radius: 50%; border: none; background: rgba(0,0,0,0.3); color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; position: absolute; bottom: 1.5rem; transition: 0.2s; }
+.half-vendor .btn-giant-mic { bottom: 1.5rem; }
+.btn-giant-mic:active { transform: scale(0.9); }
+.btn-giant-mic.recording { background: white; color: black; }
+.mic-ripple { position: absolute; inset: 0; border-radius: 50%; border: 4px solid white; opacity: 0; }
+.btn-giant-mic.recording .mic-ripple { animation: micPulse 1.5s infinite; }
+@keyframes micPulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+
+.audio-waves { position: absolute; bottom: 1.5rem; display: flex; gap: 8px; height: 40px; align-items: center; }
+.audio-waves span { width: 8px; background: white; border-radius: 4px; height: 20%; animation: waveAnim 0.5s infinite alternate; }
+.audio-waves span:nth-child(2) { animation-delay: 0.1s; } .audio-waves span:nth-child(3) { animation-delay: 0.2s; } .audio-waves span:nth-child(4) { animation-delay: 0.3s; } .audio-waves span:nth-child(5) { animation-delay: 0.4s; }
+@keyframes waveAnim { 0% { height: 20%; } 100% { height: 100%; } }
+
+/* ── 5. GUARDIAN TAB (Safety Radar) ───────────────── */
+.guardian-layout { display: flex; flex-direction: column; height: 100%; padding: 2rem; justify-content: center; align-items: center; }
+.guardian-header { text-align: center; margin-bottom: 3rem; }
+.guardian-header h1 { font-size: 2.5rem; font-weight: 800; color: var(--neon-yellow); text-transform: uppercase; }
+.guardian-header p { font-size: 1.2rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+.radar-container { position: relative; width: 250px; height: 250px; display: flex; justify-content: center; align-items: center; }
+.btn-giant-radar { width: 100px; height: 100px; border-radius: 50%; background: var(--neon-yellow); color: #000; border: none; z-index: 10; cursor: pointer; transition: 0.2s; box-shadow: 0 0 20px rgba(255,214,0,0.5); }
+.btn-giant-radar:active { transform: scale(0.9); }
+.radar-ping { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--neon-yellow); opacity: 0; }
+.btn-giant-radar.listening ~ .radar-ping { animation: pingAnim 2s infinite ease-out; }
+.btn-giant-radar.listening ~ .radar-ping.delay { animation-delay: 1s; }
+@keyframes pingAnim { 0% { transform: scale(0.4); opacity: 1; border-width: 4px; } 100% { transform: scale(1.5); opacity: 0; border-width: 1px; } }
+.guardian-status { position: absolute; bottom: -40px; font-weight: 800; font-size: 1.2rem; color: var(--neon-yellow); letter-spacing: 2px; }
+
+.text-input-fallback { margin-top: 4rem; width: 100%; }
+.giant-textarea { width: 100%; background: #1A1A1A; border: 2px solid #333; color: white; font-family: var(--font-stack); font-size: 1.2rem; padding: 1rem; border-radius: 12px; height: 120px; resize: none; margin-bottom: 1rem; }
+.giant-textarea:focus { outline: none; border-color: var(--neon-yellow); }
+.btn-secondary-giant { width: 100%; padding: 1.2rem; background: #333; color: white; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+
+/* ── 6. SOS TAB (Citizen Style & Slide to SOS) ────── */
+.sos-theme { background: #0A0000; }
+.map-bg { position: absolute; inset: 0; background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%230A0000"/><path d="M10 10 h 80 v 80 h -80 Z" fill="none" stroke="%23330000" stroke-width="2"/><path d="M30 10 v 80 M50 10 v 80 M70 10 v 80 M10 30 h 80 M10 50 h 80 M10 70 h 80" stroke="%23330000" stroke-width="1"/></svg>'); background-size: 150px 150px; opacity: 0.5; z-index: 0; }
+.sos-layout { position: relative; z-index: 10; display: flex; flex-direction: column; height: 100%; padding: 2rem; }
+
+.sos-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.pulse-dot { width: 16px; height: 16px; background: var(--danger-red); border-radius: 50%; box-shadow: 0 0 10px var(--danger-red); animation: pulseDot 1s infinite alternate; }
+@keyframes pulseDot { to { transform: scale(1.5); opacity: 0.5; } }
+.sos-header h1 { font-size: 1.8rem; font-weight: 800; color: var(--danger-red); text-transform: uppercase; letter-spacing: 2px; }
+
+.location-card { background: rgba(255,26,26,0.1); border: 2px solid var(--danger-red); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; }
+.location-card .label { font-size: 0.9rem; font-weight: 800; color: var(--danger-red); margin-bottom: 0.5rem; letter-spacing: 1px; }
+.location-card .coords { font-size: 1.6rem; font-weight: 800; font-family: monospace; color: white; margin-bottom: 0.25rem; }
+.location-card .address { font-size: 1.1rem; color: var(--text-secondary); }
+
+.contacts-grid { display: flex; flex-direction: column; gap: 1rem; margin-bottom: auto; }
+.giant-contact-btn { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem; border-radius: 16px; text-decoration: none; color: white; background: #1A1A1A; border: 2px solid #333; transition: 0.2s; }
+.giant-contact-btn:active { transform: scale(0.98); }
+.giant-contact-btn svg { width: 32px; height: 32px; }
+.police svg { stroke: var(--police-blue); }
+.tourism svg { stroke: var(--neon-yellow); }
+.giant-contact-btn .text { display: flex; flex-direction: column; }
+.giant-contact-btn span { font-size: 1rem; font-weight: 800; color: var(--text-secondary); letter-spacing: 1px; }
+.giant-contact-btn strong { font-size: 1.8rem; font-weight: 800; }
+
+/* SLIDE TO SOS */
+.slide-to-sos-wrapper { margin-top: 2rem; width: 100%; }
+.slide-track { width: 100%; height: 80px; background: rgba(255,26,26,0.2); border: 2px solid var(--danger-red); border-radius: 40px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.slide-text { font-size: 1.5rem; font-weight: 800; color: var(--danger-red); letter-spacing: 3px; position: absolute; pointer-events: none; opacity: 0.7; animation: pulseText 2s infinite; }
+@keyframes pulseText { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+.slide-knob { position: absolute; left: 4px; top: 4px; width: 72px; height: 72px; background: var(--danger-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 20px rgba(255,26,26,0.5); z-index: 2; /* Drag logic handled in JS */ }
+
+.dispatch-status { text-align: center; font-size: 1.2rem; font-weight: 800; color: var(--neon-green); margin-top: 1rem; min-height: 1.5rem; }
+
+/* ── 7. GLOBAL OVERLAYS (Results) ─────────────────── */
+.results-overlay { position: fixed; inset: 0; background: var(--bg-overlay); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 2rem; backdrop-filter: blur(10px); }
+.results-card { width: 100%; max-width: 400px; background: #000; padding: 2.5rem; border-radius: 24px; text-align: center; border: 4px solid; animation: popIn 0.3s var(--spring); }
+.tier-overpriced { border-color: var(--danger-red); box-shadow: 0 0 50px rgba(255,26,26,0.4); }
+.tier-danger { border-color: var(--neon-yellow); box-shadow: 0 0 50px rgba(255,214,0,0.4); }
+
+.alert-title { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: inherit; }
+.tier-overpriced .alert-title { color: var(--danger-red); }
+.tier-danger .alert-title { color: var(--neon-yellow); }
+
+.alert-price { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; color: white; }
+.alert-msg { font-size: 1.2rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 2.5rem; font-weight: 600; }
+
+.btn-giant-close { width: 100%; padding: 1.25rem; background: #333; color: white; border: none; border-radius: 16px; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+
+@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+/* ── 8. DESKTOP FRAME ─────────────────────────────── */
+@media (min-width: 640px) {
+    body { display: flex; align-items: center; justify-content: center; background: #050505; }
+    .app-container {
+        max-width: 430px; margin: 2rem auto; border-radius: 40px; border: 4px solid #333;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        height: min(90dvh, 900px); max-height: 900px; overflow: hidden;
+    }
+    .bottom-tab-bar { border-bottom-left-radius: 36px; border-bottom-right-radius: 36px; }
+}
+
+/* ── 9. ULTIMATE UPGRADES: BLACKBOX, VISION, HEATMAP ── */
+
+.blackbox-indicator { position: absolute; top: 1.5rem; left: 1.5rem; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800; font-size: 0.9rem; z-index: 1000; display: none; align-items: center; gap: 0.5rem; border: 1px solid var(--danger-red); }
+.rec-dot { width: 10px; height: 10px; background: var(--danger-red); border-radius: 50%; animation: recPulse 1s infinite; }
+@keyframes recPulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--danger-red); } 50% { opacity: 0.3; box-shadow: none; } 100% { opacity: 1; box-shadow: 0 0 10px var(--danger-red); } }
+
+.vision-warning-box { background: rgba(255, 26, 26, 0.1); border: 2px dashed var(--danger-red); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: left; }
+.vision-warning-box strong { display: block; color: var(--danger-red); margin-bottom: 0.5rem; font-size: 1.2rem; text-transform: uppercase; }
+.vision-warning-box p { color: white; font-size: 1rem; line-height: 1.4; margin: 0; }
+
+.heatmap-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.heat-node { position: absolute; width: 100px; height: 100px; background: radial-gradient(circle, rgba(255,26,26,0.5) 0%, rgba(255,26,26,0) 70%); border-radius: 50%; transform: translate(-50%, -50%); animation: heatPulse 3s infinite; }
+.heat-node.critical { background: radial-gradient(circle, rgba(255,214,0,0.6) 0%, rgba(255,26,26,0) 70%); width: 150px; height: 150px; animation-duration: 2s; }
+@keyframes heatPulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; } 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; } }
+
+.heatmap-warning { background: rgba(0,0,0,0.7); border: 1px solid var(--danger-red); color: white; text-align: center; padding: 1rem; margin: 0 2rem 2rem; border-radius: 12px; position: relative; z-index: 2; font-size: 1rem; font-weight: 600; }
