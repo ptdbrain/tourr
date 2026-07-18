@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  tour-resq:
+    build: .
+    container_name: tour_resq_app
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CORS_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+    volumes:
+      - ./backend/app/data:/usr/src/app/backend/app/data
+    restart: unless-stopped

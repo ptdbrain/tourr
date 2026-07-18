@@ -6,7 +6,8 @@ layout forgery, and "double menus" (different prices for tourists vs locals).
 """
 import json
 from pydantic import BaseModel, Field
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from app.core.config import settings
 
 class VisionAnalysisResult(BaseModel):
@@ -27,9 +28,7 @@ async def analyze_menu_layout(image_base64: str, mime_type: str = "image/jpeg", 
 
     # Real implementation
     try:
-        genai.configure(api_key=settings.gemini_key)
-        # Gemini 2.5 Flash supports both vision and structured outputs
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        client = genai.Client(api_key=settings.gemini_key)
         
         prompt = """You are an expert fraud investigator in Vietnam specializing in tourist traps.
 Analyze the provided image of a restaurant menu, receipt, or POS credit card terminal.
@@ -45,14 +44,12 @@ Specifically look for:
 Return a structured JSON assessment."""
 
         # Create the image dict format expected by the model
-        image_part = {
-            "mime_type": mime_type,
-            "data": image_base64
-        }
+        image_part = types.Part.from_bytes(data=image_base64, mime_type=mime_type)
         
-        response = model.generate_content(
-            [prompt, image_part],
-            generation_config=genai.GenerationConfig(
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[prompt, image_part],
+            config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=VisionAnalysisResult,
                 temperature=0.1

@@ -11,15 +11,9 @@ def crawl_delivery_price(item_name: str, region: str = "hanoi") -> int:
     Returns the median price if successful, or 0 if failed/rejected.
     """
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=settings.gemini_key)
-        
-        # Try to initialize with search tools. Fallback to basic if SDK version differs.
-        try:
-            model = genai.GenerativeModel("gemini-2.0-flash", tools="google_search_retrieval")
-        except Exception:
-            model = genai.GenerativeModel("gemini-2.0-flash")
-
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=settings.gemini_key)
         prompt = f"""Search the web for the current price of "{item_name}" in {region}, Vietnam on food delivery apps like ShopeeFood, Foody, or GrabFood.
 You MUST find exactly 3 different prices from 3 different casual/street food vendors (not luxury restaurants).
 For each, provide the URL of the vendor's page.
@@ -32,10 +26,12 @@ Return ONLY a valid JSON array in this exact format:
 ]
 Do not include any markdown, backticks, or extra text."""
 
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(temperature=0.1)
-        )
+        try:
+            config = types.GenerateContentConfig(temperature=0.1, tools=[{"google_search": {}}])
+            response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt, config=config)
+        except Exception:
+            config = types.GenerateContentConfig(temperature=0.1)
+            response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt, config=config)
         
         raw_text = response.text.strip().removeprefix('```json').removesuffix('```').strip()
         data = json.loads(raw_text)

@@ -1,22 +1,31 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
-WORKDIR /app
+# Set working directory
+WORKDIR /usr/src/app
 
-# Install dependencies
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Copy backend code
-COPY backend/ ./backend/
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy frontend
-COPY frontend/ ./frontend/
+# Install python dependencies
+COPY backend/requirements.txt ./backend/
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Set working directory to backend
-WORKDIR /app/backend
+# Copy project files
+COPY backend ./backend/
+COPY frontend ./frontend/
 
 # Expose port
 EXPOSE 8000
 
-# Run
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Set working directory for the server
+WORKDIR /usr/src/app/backend
+
+# Command to run the application
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

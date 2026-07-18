@@ -84,7 +84,8 @@ async def translate_text(
         Dict with translation, romanization, and cultural notes
     """
     try:
-        import google.generativeai as genai
+        from google import genai
+        from google.genai import types
 
         if not settings.gemini_key:
             return {
@@ -94,7 +95,7 @@ async def translate_text(
                 "error": "API key not configured"
             }
 
-        genai.configure(api_key=settings.gemini_key)
+        client = genai.Client(api_key=settings.gemini_key)
 
         lang_names = {
             "en": "English", "ko": "Korean", "zh": "Chinese",
@@ -121,18 +122,23 @@ Context: {ctx}
 
 Text: "{safe_text}"
 
+CRITICAL INSTRUCTIONS:
+1. The input is live speech. It may contain stutters, filler words (um, uh, à, ừm), or repetitions.
+2. DO NOT translate word-for-word. Summarize and smoothen the sentence so it is concise, natural, and polite.
+3. Extract the core intent and output only the polished translation.
+
 Respond in this exact JSON format (no markdown):
 {{
-  "translation": "the translated text",
+  "translation": "the polished and translated text",
   "romanization": "phonetic pronunciation guide if target is Vietnamese/Chinese/Korean (e.g., 'sin loi' for 'xin lỗi'). Empty string if not applicable.",
   "cultural_note": "brief cultural context if relevant (e.g., 'In Vietnam, always smile when negotiating'). Empty string if not needed.",
   "formality": "formal/informal/neutral"
 }}"""
 
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
                 max_output_tokens=150,
                 temperature=0.3
             )

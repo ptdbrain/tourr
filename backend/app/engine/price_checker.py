@@ -17,7 +17,8 @@ import json
 import math
 from typing import Optional, Tuple
 from pydantic import BaseModel, Field
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from app.core.config import settings
 from app.data.price_db import get_price_stats
 
@@ -240,9 +241,7 @@ async def analyze_price_context(
     if not settings.gemini_key:
         return None
 
-    genai.configure(api_key=settings.gemini_key)
-    # Using Gemini 2.5 Flash to support response_schema
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    client = genai.Client(api_key=settings.gemini_key)
 
     prompt = f"""You are a hyper-local pricing expert in Vietnam.
 Analyze the following tourist interaction: "{description}"
@@ -259,9 +258,10 @@ Estimate the min and max FAIR market price for ONE UNIT of this item in this SPE
 If it's a bespoke/handicraft item, set is_bespoke_art to true.
 """
     try:
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=PriceEstimationData,
                 temperature=0.1
@@ -342,8 +342,7 @@ async def check_price_from_image(
     if not settings.gemini_key:
         return None
 
-    genai.configure(api_key=settings.gemini_key)
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    client = genai.Client(api_key=settings.gemini_key)
 
     prompt = """You are an OCR expert analyzing a Vietnamese restaurant menu, receipt, or price board.
 
@@ -357,10 +356,11 @@ Extract ALL items with their prices. Pay close attention to:
 Return a structured list of all items found."""
 
     try:
-        image_part = {"mime_type": "image/jpeg", "data": image_base64}
-        response = model.generate_content(
-            [prompt, image_part],
-            generation_config=genai.GenerationConfig(
+        image_part = types.Part.from_bytes(data=image_base64, mime_type="image/jpeg")
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[prompt, image_part],
+            config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=OCRExtractionResult,
                 temperature=0.1

@@ -78,7 +78,8 @@ class SOSRequest(BaseModel):
 # ─────────────────────────────────────────────────────────
 
 @router.post("/api/v1/analyze-situation")
-async def analyze_situation(req: SituationRequest, background_tasks: BackgroundTasks):
+@limiter.limit("10/minute")
+async def analyze_situation(req: SituationRequest, request: Request, background_tasks: BackgroundTasks):
     """
     Combined endpoint: price analysis + scam detection + defense script.
     Automatically triggers Guardian Blackbox on extreme overcharges.
@@ -138,7 +139,8 @@ async def analyze_situation(req: SituationRequest, background_tasks: BackgroundT
 
 
 @router.post("/api/v1/check-price")
-async def check_price(req: PriceCheckRequest):
+@limiter.limit("20/minute")
+async def check_price(req: PriceCheckRequest, request: Request):
     """
     DB-backed price check using Z-score anomaly detection.
     Returns insufficient_data when sample_count < MIN_SAMPLE_SIZE.
@@ -153,7 +155,8 @@ async def check_price(req: PriceCheckRequest):
 
 
 @router.post("/api/v1/analyze-vision")
-async def analyze_vision(req: VisionRequest):
+@limiter.limit("5/minute")
+async def analyze_vision(req: VisionRequest, request: Request):
     """Analyze an image (menu/receipt/POS/banknotes) for forgery and price traps."""
     vision_assessment = await analyze_menu_layout(
         image_base64=req.image_base64,
@@ -170,7 +173,8 @@ async def analyze_vision(req: VisionRequest):
 # ─────────────────────────────────────────────────────────
 
 @router.post("/api/v1/translate")
-async def translate(req: TranslateRequest):
+@limiter.limit("20/minute")
+async def translate(req: TranslateRequest, request: Request):
     """Domain-adapted translation with cultural context."""
     result = await translate_text(
         text=req.text,
@@ -182,7 +186,8 @@ async def translate(req: TranslateRequest):
 
 
 @router.post("/api/v1/translate/confrontation")
-async def translate_confrontation(req: ConfrontationRequest):
+@limiter.limit("10/minute")
+async def translate_confrontation(req: ConfrontationRequest, request: Request):
     """Specialized translation for price disputes — shows Vietnamese to vendor."""
     result = await translate_for_confrontation(
         text=req.text,
@@ -228,7 +233,8 @@ async def emergency_info(lang: str = "en"):
 # ─────────────────────────────────────────────────────────
 
 @router.post("/api/v1/dispatch-report")
-async def dispatch_report(req: DispatchRequest):
+@limiter.limit("5/minute")
+async def dispatch_report(req: DispatchRequest, request: Request):
     """Send official Vietnamese incident report to selected authority."""
     import datetime
     audio_hash = hashlib.md5(req.details.encode()).hexdigest()

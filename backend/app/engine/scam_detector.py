@@ -233,13 +233,14 @@ async def detect_scam_with_ai(
 
     # Then enhance with AI analysis
     try:
-        import google.generativeai as genai
+        from google import genai
+        from google.genai import types
         from app.core.config import settings
 
         if not settings.gemini_key:
             return result
 
-        genai.configure(api_key=settings.gemini_key)
+        client = genai.Client(api_key=settings.gemini_key)
 
         from app.engine.privacy_scrubber import scrub_pii
         safe_description = scrub_pii(description)
@@ -267,10 +268,10 @@ Important rules:
 - Keep response UNDER 40 WORDS. Be extremely concise. Use bullet points.
 - Respond entirely in {target_lang}"""
 
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
                 max_output_tokens=100,
                 temperature=0.2
             )

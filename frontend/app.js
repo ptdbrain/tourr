@@ -97,23 +97,34 @@ window.startJourney = async function() {
     btn.innerHTML = "LOCATING...";
     btn.disabled = true;
     
+    let resolved = false;
+    const proceed = async () => {
+        if (resolved) return;
+        resolved = true;
+        await doLocationReveal();
+    };
+
+    // Failsafe timeout (4 seconds)
+    setTimeout(proceed, 4000);
+
     if (!navigator.geolocation) {
-        await doLocationReveal(); // Fallback
-        return;
+        return proceed();
     }
 
     navigator.geolocation.getCurrentPosition(
         async (pos) => {
+            if (resolved) return;
             if (navigator.vibrate) try { navigator.vibrate([50, 50]); } catch(e){}
             userLocation.lat = pos.coords.latitude;
             userLocation.lng = pos.coords.longitude;
+            resolved = true;
             setTimeout(doLocationReveal, 600);
         },
         async (err) => {
             console.warn("GPS failed, using fallback.", err);
-            await doLocationReveal();
+            proceed();
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 0 }
     );
 };
 
@@ -123,9 +134,13 @@ async function doLocationReveal() {
     
     // Reverse Geocoding with Nominatim API (OpenStreetMap)
     try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLocation.lat}&lon=${userLocation.lng}&format=json`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLocation.lat}&lon=${userLocation.lng}&format=json`, {
+            headers: {
+                'Accept-Language': 'en'
+            }
+        });
         const data = await res.json();
-        let placeName = data.address.amenity || data.address.restaurant || data.address.road || data.address.city || "Unknown Location";
+        let placeName = data.address.amenity || data.address.restaurant || data.address.road || data.address.city || "Hanoi, Vietnam";
         userLocation.name = placeName;
     } catch(e) {
         userLocation.name = "Hanoi (Fallback)";
@@ -231,7 +246,7 @@ window.captureAndAnalyze = async function() {
         const res = await fetch(API_BASE + '/api/v1/check-price-ocr', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image_base64: base64Image, language: currentLang, lat: userLocation.lat, lng: userLocation.lng })
+            body: JSON.stringify({ image_base64: base64Image, language: currentLang, region: getRegionFromCoordinates(userLocation.lat, userLocation.lng) })
         });
         
         if (res.status === 429) {
@@ -297,7 +312,7 @@ async function contributePrice() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    region: "hanoi", category: "food", item_name: item.item_name, item_name_vi: item.item_name_vi,
+                    region: getRegionFromCoordinates(userLocation.lat, userLocation.lng), category: "food", item_name: item.item_name, item_name_vi: item.item_name_vi,
                     price_vnd: Math.round(item.unit_price), venue_type: "street", device_id: 'dev123'
                 })
             });
@@ -380,7 +395,14 @@ async function handleMessage(text, src, tgt, speaker, tgtEl) {
             body: JSON.stringify({ session_id: liveSessionId, text, source_lang: src, target_lang: tgt, speaker })
         });
         const data = await res.json();
-        if (data.translated) document.getElementById(tgtEl).textContent = data.translated;
+        if (data.translated) {
+            document.getElementById(tgtEl).textContent = data.translated;
+            if (window.speechSynthesis) {
+                const utterance = new SpeechSynthesisUtterance(data.translated);
+                utterance.lang = tgt === 'vi' ? 'vi-VN' : tgt === 'ko' ? 'ko-KR' : tgt === 'zh' ? 'zh-CN' : 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
         
         // Smart AI Widget Triggers
         if (data.is_suspicious) {
@@ -442,8 +464,29 @@ window.analyzeScam = async function() {
     if (!text) return;
     const overlay = document.getElementById('scam-results-overlay');
     overlay.style.display = 'flex';
-    document.getElementById('guardian-alert-title').innerText = "AI ANALYSIS";
-    document.getElementById('guardian-alert-msg').innerText = "Based on your description, this might be a scam. Be careful.";
+    document.getElementById('guardian-alert-title').innerText = "ANALYZING...";
+    document.getElementById('guardian-alert-msg').innerText = "Please wait, AI is analyzing the situation...";
+    
+    try {
+        const region = getRegionFromCoordinates(userLocation.lat, userLocation.lng);
+        const res = await fetch(API_BASE + '/api/v1/analyze-situation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description: text, language: currentLang, region: region })
+        });
+        const data = await res.json();
+        
+        if (data.status === 'success' && data.result) {
+            document.getElementById('guardian-alert-title').innerText = data.result.detected ? "SCAM DETECTED" : "AI ANALYSIS";
+            document.getElementById('guardian-alert-msg').innerText = data.result.ai_analysis || "Be careful with your belongings and negotiate clearly.";
+        } else {
+            document.getElementById('guardian-alert-title').innerText = "ERROR";
+            document.getElementById('guardian-alert-msg').innerText = "Could not analyze the situation.";
+        }
+    } catch(e) {
+        document.getElementById('guardian-alert-title').innerText = "ERROR";
+        document.getElementById('guardian-alert-msg').innerText = "Network Error.";
+    }
 };
 window.closeScamResults = function() { document.getElementById('scam-results-overlay').style.display = 'none'; };
 
@@ -506,3 +549,35 @@ function initSlideToSOS() {
         }, 5000);
     }
 }
+
+// ── 7. UTILS & REPORTING ──────────────────────────────────
+function getRegionFromCoordinates(lat, lng) {
+    if (lat > 20.5 && lat < 21.5 && lng > 105.0 && lng < 106.5) return 'hanoi';
+    if (lat > 15.5 && lat < 16.5 && lng > 107.5 && lng < 108.5) return 'danang';
+    if (lat > 10.0 && lat < 11.0 && lng > 106.0 && lng < 107.0) return 'hcm';
+    if (lat > 15.0 && lat < 16.0 && lng > 108.0 && lng < 108.5) return 'hoian';
+    if (lat > 12.0 && lat < 12.5 && lng > 109.0 && lng < 109.5) return 'nhatrang';
+    if (lat > 10.0 && lat < 10.5 && lng > 103.5 && lng < 104.5) return 'phuquoc';
+    return 'hanoi'; // Default
+}
+
+window.dispatchReport = async function() {
+    if (navigator.vibrate) navigator.vibrate(100);
+    const btn = document.querySelector('.btn-dispatch');
+    if (btn) { btn.innerHTML = "SENDING..."; btn.disabled = true; }
+    
+    try {
+        await fetch(API_BASE + '/api/v1/dispatch-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                lat: userLocation.lat, lng: userLocation.lng, location_name: userLocation.name,
+                incident_type: "scam_report", language: currentLang, severity: "medium", evidence: window.evidenceBuffer
+            })
+        });
+        if (btn) { btn.innerHTML = "SENT TO POLICE"; btn.style.background = 'var(--neon-green)'; btn.style.color = 'black'; }
+        window.evidenceBuffer = { images: [], transcripts: [] };
+    } catch(e) {
+        if (btn) { btn.innerHTML = "FAILED. TRY SOS."; }
+    }
+};
