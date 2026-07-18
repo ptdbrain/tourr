@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="https://unpkg.com/feather-icons"></script>
-    <link rel="stylesheet" href="styles.css?v=17">
+    <link rel="stylesheet" href="styles.css?v=18">
 </head>
 <body class="dark-theme">
     <div id="global-map-bg" class="global-map-bg"></div>
@@ -136,11 +136,17 @@
                     </div>
                     <div class="alert-price" id="scan-alert-price">...</div>
                     <div class="breakdown-list custom-scrollbar" id="scan-breakdown"></div>
-                    <p class="alert-msg" id="scan-alert-msg">Normal price is...</p>
-                    <div class="sheet-actions">
-                        <button id="btn-contribute" class="btn-pill btn-outline" style="display:none;" onclick="contributePrice()">I PAID THIS</button>
-                        <button id="btn-retry" class="btn-pill btn-outline" style="display:none; border-color: var(--neon-green); color: var(--neon-green);" onclick="retryUpload()">RETRY UPLOAD</button>
-                        <button class="btn-pill btn-solid" onclick="closePriceResults()">DISMISS</button>
+                    <div class="sheet-actions" style="flex-wrap: wrap; gap: 10px;">
+                        <button id="btn-contribute" class="btn-pill btn-outline" style="display:none; width:100%;" onclick="contributePrice()">I PAID THIS</button>
+                        <button id="btn-retry" class="btn-pill btn-outline" style="display:none; border-color: var(--neon-green); color: var(--neon-green); width:100%;" onclick="retryUpload()">RETRY UPLOAD</button>
+                        
+                        <div style="display: flex; gap: 10px; width: 100%;">
+                            <button class="btn-pill btn-solid" style="flex:1;" onclick="closePriceResults()">CLOSE</button>
+                            <label class="btn-pill btn-solid" style="flex:1; background: var(--neon-green); color: black; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+                                <input type="file" accept="image/*" style="display:none;" onchange="closePriceResults(); handleBillUpload(event);">
+                                <i data-feather="upload" style="width:16px;height:16px;"></i> UPLOAD ANOTHER
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -261,6 +267,6 @@
         </nav>
     </main>
     <script>feather.replace();</script>
-    <script src="app.js?v=17"></script>
+    <script src="app.js?v=18"></script>
 </body>
 </html>
