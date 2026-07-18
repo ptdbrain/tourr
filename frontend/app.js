@@ -176,7 +176,7 @@ window.switchTab = function(tabId) {
     if (target) target.classList.add('active');
     
     // 2. Update Bottom Nav Highlight
-    document.querySelectorAll('.bottom-tab-bar .tab-item').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.floating-bottom-nav .nav-item').forEach(btn => btn.classList.remove('active'));
     if (tabId === 'tab-dashboard') document.getElementById('nav-home')?.classList.add('active');
     else if (tabId === 'tab-scanner') document.getElementById('nav-scan')?.classList.add('active');
     else if (tabId === 'tab-translate') document.getElementById('nav-chat')?.classList.add('active');
@@ -196,6 +196,9 @@ window.switchTab = function(tabId) {
             mapBg.style.display = 'none';
         }
     }
+    
+    // 4. Update Feather Icons if any were dynamically added
+    if (typeof feather !== 'undefined') feather.replace();
 };
 
 // ── 3. CAMERA SCANNER (Live Video) ─────────────────────────────

@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="Tour-resQ — Safe Travel Companion">
-    <meta name="theme-color" content="#000000">
-    <title>Tour-resQ — Safety & Assistive UI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <meta name="description" content="Tour-resQ — Premium Safe Travel Companion">
+    <meta name="theme-color" content="#0A0C12">
+    <title>Tour-resQ</title>
+    <!-- Premium Fonts: Outfit for Display, Inter for Body -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <link rel="stylesheet" href="styles.css?v=3">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body class="dark-theme">
     <div id="global-map-bg" class="global-map-bg"></div>
@@ -17,7 +19,7 @@
         
         <!-- Blackbox & Global SOS -->
         <div id="blackbox-indicator" class="blackbox-indicator">
-            <span class="rec-dot"></span> REC
+            <span class="rec-dot"></span> <span class="rec-text">LIVE</span>
         </div>
         <button id="global-sos-btn" class="global-sos-btn hidden" onclick="switchTab('tab-sos')" aria-label="Emergency SOS">
             SOS
@@ -26,107 +28,116 @@
         <!-- TAB 0: HOME (SPLASH) -->
         <section id="tab-home" class="tab-content active">
             <div class="hero-content">
-                <img src="logo.png" alt="Tour-resQ Logo" class="app-logo">
+                <div class="logo-wrapper">
+                    <img src="logo.png" alt="Tour-resQ" class="app-logo">
+                    <div class="logo-glow"></div>
+                </div>
                 <h1 id="home-title" data-i18n="app.name">Tour-resQ</h1>
-                <p class="tagline" data-i18n="app.tagline">Discover Vietnam Safely & Like a Local</p>
+                <p class="tagline" data-i18n="app.tagline">Discover Vietnam Safely.</p>
             </div>
             
             <div class="hero-actions">
                 <button id="btn-start-perms" class="btn-explore" onclick="startJourney()">
-                    EXPLORE NOW <span class="arrow">→</span>
+                    <span>EXPLORE NOW</span> <i data-feather="arrow-right"></i>
                 </button>
-                <p class="privacy-note">We only request location to personalize your guide</p>
+                <p class="privacy-note">Encrypted & Privacy-First</p>
             </div>
         </section>
 
         <!-- 1. LOCATION REVEAL -->
         <section id="tab-location-reveal" class="tab-content">
             <div class="location-reveal-card">
-                <h2>LOCATING...</h2>
-                <div class="radar-ping" style="position:relative; width:60px; height:60px; margin:20px auto; border-color:var(--neon-green)"></div>
+                <i data-feather="map-pin" class="locating-icon pulse"></i>
+                <h2 class="tracking-widest">LOCATING</h2>
                 <h1 id="reveal-location-name">...</h1>
             </div>
         </section>
 
-        <!-- TAB 2: DASHBOARD (Bento Box UI) -->
+        <!-- TAB 2: DASHBOARD (Glass Bento) -->
         <section id="tab-dashboard" class="tab-content">
             <header class="bento-header">
+                <div class="greeting-text">
+                    <p>Current Location</p>
+                    <h2 id="dash-location-name">Vietnam</h2>
+                </div>
                 <div class="avatar-wrap">
                     <img src="logo.png" alt="Profile" class="bento-avatar">
                 </div>
-                <div class="greeting-text">
-                    <p>Welcome to</p>
-                    <h2 id="dash-location-name">Vietnam</h2>
-                </div>
             </header>
             
-
-
             <div class="bento-grid">
                 <!-- Large Highlight Card -->
-                <button class="bento-card highlight-card" onclick="startCameraScan()">
-                    <div class="card-bg-gradient"></div>
-                    <div class="bento-icon">📸</div>
+                <button class="bento-card highlight-card glass-panel" onclick="startCameraScan()">
+                    <div class="card-bg-glow"></div>
+                    <div class="bento-icon-svg"><i data-feather="maximize"></i></div>
                     <h3>Magic Menu</h3>
-                    <p>Translate & Verify Prices</p>
+                    <p>Scan Bills & Verify Prices</p>
                 </button>
                 
                 <!-- Secondary Cards -->
-                <button class="bento-card" onclick="startLiveTranslate()">
-                    <div class="bento-icon" style="color:var(--police-blue)">🎙️</div>
+                <button class="bento-card glass-panel" onclick="startLiveTranslate()">
+                    <div class="bento-icon-svg blue-glow"><i data-feather="mic"></i></div>
                     <h3>Local Chat</h3>
-                    <p>Talk Smoothly</p>
+                    <p>AI Interpreter</p>
                 </button>
                 
-                <button class="bento-card" onclick="switchTab('tab-guardian')">
-                    <div class="bento-icon" style="color:var(--neon-yellow)">🤖</div>
-                    <h3>AI Assistant</h3>
-                    <p>Ask Local Tips</p>
+                <button class="bento-card glass-panel" onclick="switchTab('tab-guardian')">
+                    <div class="bento-icon-svg yellow-glow"><i data-feather="shield"></i></div>
+                    <h3>Guardian</h3>
+                    <p>Safety Tips</p>
                 </button>
                 
                 <!-- Info Mock Card -->
-                <div class="bento-card wide-card">
+                <div class="bento-card wide-card glass-panel">
                     <div class="info-row">
-                        <span class="info-temp">28°C 🌤️</span>
-                        <span class="info-currency">1 USD ≈ 25k VND</span>
+                        <span class="info-item"><i data-feather="sun"></i> 28°C</span>
+                        <span class="info-item"><i data-feather="dollar-sign"></i> 1 USD = 25k VND</span>
                     </div>
-                    <p class="info-tip">Tip: Always verify prices with Magic Menu.</p>
                 </div>
             </div>
         </section>
 
-        <!-- 3. SCANNER TAB (Live Video) -->
+        <!-- 3. SCANNER TAB -->
         <section id="tab-scanner" class="tab-content">
             <div class="camera-layer">
                 <video id="live-camera" autoplay playsinline class="mock-camera-bg"></video>
                 <canvas id="camera-canvas" hidden></canvas>
                 <div class="camera-overlay">
-                    <div class="focus-frame">
+                    <div class="focus-frame modern-focus">
                         <div class="corner t-l"></div><div class="corner t-r"></div>
                         <div class="corner b-l"></div><div class="corner b-r"></div>
-                        <div class="scan-laser"></div>
+                        <div class="scan-laser-modern"></div>
                     </div>
                 </div>
             </div>
-            <header class="assistive-header">
-                <h1 id="scanner-title">Magic Menu Scanner</h1>
-                <p>Point at menu or bill to verify</p>
+            <header class="assistive-header glass-header">
+                <h1 id="scanner-title">Price Scanner</h1>
+                <p>Align bill within frame</p>
             </header>
-            <div class="assistive-controls" style="display:flex; gap:10px;">
-                <button class="btn-giant-action btn-neon-green" onclick="captureAndAnalyze()" style="flex:1;">
-                    <span>CAPTURE & ANALYZE</span>
+            
+            <div class="assistive-controls glass-controls">
+                <button class="btn-giant-action btn-neon-green" onclick="captureAndAnalyze()">
+                    <i data-feather="aperture"></i> <span>ANALYZE</span>
                 </button>
-                <button class="btn-giant-action" style="width:60px; padding:0; border-radius:30px;" onclick="stopCameraAndGoHome()">X</button>
+                <button class="btn-icon-circular" onclick="stopCameraAndGoHome()"><i data-feather="x"></i></button>
             </div>
-            <!-- Overlay for Results -->
+            
+            <!-- Bottom Sheet Results -->
             <div id="price-results-overlay" class="results-overlay" style="display:none">
-                <div class="results-card high-contrast tier-overpriced">
-                    <h2 class="alert-title" id="scan-alert-title">OVERPRICED</h2>
+                <div class="bottom-sheet glass-panel tier-overpriced">
+                    <div class="sheet-handle"></div>
+                    <div class="sheet-header">
+                        <i data-feather="alert-triangle" class="alert-icon"></i>
+                        <h2 class="alert-title" id="scan-alert-title">OVERPRICED</h2>
+                    </div>
                     <div class="alert-price" id="scan-alert-price">...</div>
-                    <div class="breakdown-list" id="scan-breakdown" style="text-align:left; font-size:var(--font-sm); color:var(--text-secondary); margin-bottom:1rem; max-height:150px; overflow-y:auto; border: 1px solid var(--glass-border); padding: 10px; border-radius:10px;"></div>
+                    <div class="breakdown-list custom-scrollbar" id="scan-breakdown"></div>
                     <p class="alert-msg" id="scan-alert-msg">Normal price is...</p>
-                    <button id="btn-contribute" class="btn-giant-close btn-contribute-style" style="display:none;" onclick="contributePrice()">YES, I PAID THIS</button>
-                    <button class="btn-giant-close" onclick="closePriceResults()">DISMISS</button>
+                    
+                    <div class="sheet-actions">
+                        <button id="btn-contribute" class="btn-pill btn-outline" style="display:none;" onclick="contributePrice()">I PAID THIS</button>
+                        <button class="btn-pill btn-solid" onclick="closePriceResults()">DISMISS</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -135,104 +146,117 @@
         <section id="tab-translate" class="tab-content">
             <div class="split-screen-container">
                 <div class="split-half half-vendor rotated-180">
-                    <div class="lang-label">Tiếng Việt</div>
+                    <div class="lang-tag"><i data-feather="globe"></i> Tiếng Việt</div>
                     <div class="text-display" id="vendor-text">Xin chào</div>
-                    <button class="btn-giant-mic mic-vendor" onclick="toggleVendorMic()">🎙️</button>
+                    <button class="btn-audio-wave mic-vendor" onclick="toggleVendorMic()">
+                        <i data-feather="mic"></i>
+                        <div class="wave-rings"></div>
+                    </button>
                 </div>
                 <div class="split-half half-tourist">
-                    <div class="lang-label">English</div>
+                    <div class="lang-tag"><i data-feather="globe"></i> English</div>
                     <div class="text-display" id="tourist-text">Hello</div>
-                    <button class="btn-giant-mic mic-tourist" onclick="toggleTouristMic()">🎙️</button>
+                    <button class="btn-audio-wave mic-tourist" onclick="toggleTouristMic()">
+                        <i data-feather="mic"></i>
+                        <div class="wave-rings"></div>
+                    </button>
                 </div>
-                <button class="btn-secondary-giant btn-conclude-style" onclick="stopTranslateAndGoHome()">END</button>
+                
+                <button class="btn-floating-end" onclick="stopTranslateAndGoHome()"><i data-feather="x"></i></button>
                 
                 <!-- Smart AI Widget -->
-                <div id="smart-ai-widget" class="smart-ai-widget" style="display:none">
-                    <strong class="color-neon-green" id="smart-ai-title">PRICE DETECTED</strong>
-                    <p id="smart-ai-msg">Analyzing...</p>
+                <div id="smart-ai-widget" class="smart-ai-widget glass-toast" style="display:none">
+                    <div class="widget-icon"><i data-feather="shield-alert"></i></div>
+                    <div class="widget-content">
+                        <strong id="widget-title">WARNING</strong>
+                        <p id="widget-msg">Message</p>
+                    </div>
+                    <button class="widget-close" onclick="document.getElementById('smart-ai-widget').style.display='none'"><i data-feather="x"></i></button>
                 </div>
             </div>
         </section>
 
-        <!-- 5. GUARDIAN TAB -->
+        <!-- 5. SOS TAB -->
+        <section id="tab-sos" class="tab-content">
+            <div class="sos-container">
+                <h1 class="danger-title">EMERGENCY</h1>
+                <p class="sos-subtitle">Your encrypted location:</p>
+                <div class="sos-location-card glass-panel">
+                    <i data-feather="map-pin"></i>
+                    <div class="loc-details">
+                        <h3 id="sos-address">Hanoi</h3>
+                        <p id="sos-coords">21.0° N, 105.8° E</p>
+                    </div>
+                </div>
+                
+                <div class="sos-slider-wrapper">
+                    <div class="sos-slider-track">
+                        <span class="sos-slider-text">SLIDE TO DISPATCH POLICE</span>
+                        <div id="sos-slider-thumb" class="sos-slider-thumb"><i data-feather="chevrons-right"></i></div>
+                    </div>
+                </div>
+
+                <div id="sos-active-panel" class="sos-active-panel glass-panel" style="display:none">
+                    <h2 class="pulse-red">DISPATCHING...</h2>
+                    <p>Evidence buffer packed. Encrypted via Base64.</p>
+                    <button class="btn-pill btn-danger" onclick="dispatchReport()">CONFIRM SEND</button>
+                    <button class="btn-pill btn-outline mt-sm" onclick="cancelSOS()">CANCEL</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. GUARDIAN / AI CHAT -->
         <section id="tab-guardian" class="tab-content">
-            <div class="guardian-layout">
-                <header class="guardian-header">
-                    <h1>Local AI Assistant</h1>
-                    <p>Ask advice or verify a situation</p>
-                </header>
-                <div class="radar-container">
-                    <div class="radar-ping"></div><div class="radar-ping delay"></div>
-                    <button class="btn-giant-radar" id="guardian-mic" onclick="toggleGuardian()">RADAR</button>
-                    <div class="guardian-status" id="guardian-status-text">TAP TO LISTEN</div>
+            <header class="chat-header glass-header">
+                <div class="header-titles">
+                    <h2>AI Guardian</h2>
+                    <p>Safe Negotiation Support</p>
                 </div>
-                <div class="text-input-fallback">
-                    <textarea id="incident-input" class="giant-textarea" placeholder="Type..."></textarea>
-                    <button class="btn-secondary-giant" onclick="analyzeScam()">ANALYZE TEXT</button>
-                    <button class="btn-giant-close" style="margin-top:10px" onclick="switchTab('tab-dashboard')">BACK</button>
+            </header>
+            <div id="guardian-chat-box" class="chat-box custom-scrollbar">
+                <div class="chat-msg ai-msg glass-bubble">
+                    <p>Hi! Type the situation or price you are dealing with.</p>
                 </div>
-                <div id="scam-results-overlay" class="results-overlay" style="display:none">
-                    <div id="guardian-result-card" class="results-card high-contrast tier-danger">
-                        <h2 class="alert-title" id="guardian-alert-title">SCAM ALERT</h2>
-                        <p class="alert-msg" id="guardian-alert-msg">...</p>
-                        <div id="auto-dispatch-box" class="vision-warning-box dispatch-box-style" style="display:none;">
-                            <strong class="color-neon-green">EVIDENCE SECURED</strong>
-                            <p id="dispatch-auth-name" class="dispatch-auth-name-style">...</p>
-                            <button class="btn-secondary-giant btn-dispatch-style" onclick="dispatchReport()">DISPATCH REPORT</button>
-                            <p id="dispatch-status-msg" class="dispatch-status-msg-style"></p>
-                        </div>
-                        <button class="btn-giant-close" style="margin-top: 1rem;" onclick="closeScamResults()">DISMISS</button>
+            </div>
+            
+            <!-- Scam Overlay -->
+            <div id="scam-results-overlay" class="results-overlay glass-overlay" style="display:none">
+                <div class="bottom-sheet glass-panel">
+                    <div class="sheet-handle"></div>
+                    <div class="sheet-header">
+                        <i data-feather="activity"></i>
+                        <h2 id="guardian-alert-title">ANALYZING</h2>
                     </div>
+                    <p class="alert-msg" id="guardian-alert-msg" style="text-align:left; color:#fff;">Please wait...</p>
+                    <button class="btn-pill btn-solid" onclick="document.getElementById('scam-results-overlay').style.display='none'">CLOSE</button>
                 </div>
+            </div>
+
+            <div class="chat-input-area glass-panel">
+                <input type="text" id="incident-input" placeholder="e.g. Shoe shiner is asking 500k">
+                <button class="btn-icon-circular btn-neon-green" onclick="analyzeScam()"><i data-feather="send"></i></button>
             </div>
         </section>
 
-        <!-- 6. SOS TAB -->
-        <section id="tab-sos" class="tab-content sos-theme">
-            <div class="sos-layout">
-                <header class="sos-header">
-                    <div class="pulse-dot"></div>
-                    <h1>Support & Emergency</h1>
-                </header>
-                <button class="btn-giant-close" style="margin-bottom:10px" onclick="switchTab('tab-dashboard')">BACK</button>
-                <div class="location-card">
-                    <p class="label">CURRENT LOCATION</p>
-                    <h2 class="coords" id="sos-coords">...</h2>
-                    <p class="address" id="sos-address">...</p>
-                </div>
-                <div class="contacts-grid">
-                    <a href="tel:113" class="giant-contact-btn police">POLICE 113</a>
-                    <a href="tel:19006068" class="giant-contact-btn tourism">TOURISM</a>
-                </div>
-                <div class="slide-to-sos-wrapper">
-                    <div class="slide-track" id="sos-track">
-                        <span class="slide-text">SLIDE TO SOS</span>
-                        <div class="slide-knob" id="sos-knob">=></div>
-                    </div>
-                </div>
-                <div id="sos-dispatch-status" class="dispatch-status"></div>
+        <!-- FLOATING BOTTOM NAV (Pill Style) -->
+        <nav id="bottom-nav" class="floating-bottom-nav hidden">
+            <div class="nav-pill glass-panel">
+                <button id="nav-home" class="nav-item" onclick="switchTab('tab-dashboard')">
+                    <i data-feather="grid"></i><span>Home</span>
+                </button>
+                <button id="nav-scan" class="nav-item" onclick="startCameraScan()">
+                    <i data-feather="maximize"></i><span>Scan</span>
+                </button>
+                <button id="nav-chat" class="nav-item" onclick="startLiveTranslate()">
+                    <i data-feather="mic"></i><span>Chat</span>
+                </button>
+                <button id="nav-sos" class="nav-item danger" onclick="switchTab('tab-sos')">
+                    <i data-feather="alert-circle"></i><span>SOS</span>
+                </button>
             </div>
-        </section>
-
-    <nav class="bottom-tab-bar hidden" id="bottom-nav">
-        <button class="tab-item active" id="nav-home" onclick="switchTab('tab-dashboard')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            <span>Home</span>
-        </button>
-        <button class="tab-item" id="nav-scan" onclick="startCameraScan()">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            <span>Scan</span>
-        </button>
-        <button class="tab-item" id="nav-chat" onclick="startLiveTranslate()">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-            <span>Chat</span>
-        </button>
-        <button class="tab-item alert-tab" id="nav-sos" onclick="switchTab('tab-sos')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            <span>SOS</span>
-        </button>
-    </nav>
+        </nav>
     </main>
-    <script src="app.js?v=3"></script>
+    <script>feather.replace();</script>
+    <script src="app.js?v=5"></script>
 </body>
 </html>
