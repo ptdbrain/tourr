@@ -298,6 +298,8 @@ async def check_price_ocr(req: OCRPriceCheckRequest, request: Request):
     )
     if not result:
         return {"status": "error", "message": "OCR analysis failed. Check API key or image quality."}
+    if result.overall_verdict == "error":
+        return {"status": "error", "message": result.summary}
     return {"status": "success", "result": result.dict()}
 
 

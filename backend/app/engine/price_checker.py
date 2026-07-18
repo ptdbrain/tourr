@@ -470,4 +470,12 @@ Return a structured list of all items found."""
 
     except Exception as e:
         print(f"OCR Price Check Error: {e}")
-        return None
+        return OCRPriceCheckResult(
+            items_checked=[],
+            total_asked=0,
+            total_fair_estimate=0,
+            overall_verdict="error",
+            currency_warning="",
+            summary=f"API Error: {str(e)}",
+            requires_human_confirmation=True
+        )

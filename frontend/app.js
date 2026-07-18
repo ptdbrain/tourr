@@ -303,7 +303,7 @@ async function processBase64ImageAndAnalyze(base64Image) {
             }
         } else {
             scanTitle.innerText = "ERROR";
-            scanMsg.innerText = (data.message || "Failed to analyze image.") + "\n\n(Did you set GEMINI_API_KEY on Vercel?)";
+            scanMsg.innerText = data.message || "Failed to analyze image.";
             document.getElementById('btn-contribute').style.display = 'none';
             document.getElementById('btn-retry').style.display = 'block';
         }
