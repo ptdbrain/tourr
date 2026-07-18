@@ -348,3 +348,23 @@ async def contribute_price(req: ContributePriceRequest, request: Request):
         "status": "accepted",
         "message": f"Price for {req.item_name} ({req.price_vnd:,} VND) added to database. Thank you!",
     }
+
+# ─────────────────────────────────────────────────────────
+# ADMIN ENDPOINTS (FOR HACKATHON TEAM)
+# ─────────────────────────────────────────────────────────
+
+@router.get("/api/v1/admin/download-db")
+async def download_database():
+    """Allows downloading the SQLite DB file directly."""
+    import os
+    from fastapi.responses import FileResponse
+    
+    db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tour_resq.db")
+    if not os.path.exists(db_path):
+        return {"status": "error", "message": "Database file not found"}
+        
+    return FileResponse(
+        path=db_path,
+        media_type="application/octet-stream",
+        filename="tour_resq.db"
+    )
