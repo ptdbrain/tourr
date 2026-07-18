@@ -228,6 +228,30 @@ window.switchTab = function(tabId) {
     if (typeof feather !== 'undefined') feather.replace();
 };
 
+// Currency conversion based on language
+window.formatCurrency = function(vndAmount) {
+    if (!vndAmount) return "0 ₫";
+    const vndStr = vndAmount.toLocaleString() + " ₫";
+    let convertedStr = "";
+    if (currentLang === 'en') {
+        const usd = vndAmount / 25000;
+        convertedStr = `(~$${usd.toFixed(2)})`;
+    } else if (currentLang === 'ko') {
+        const krw = vndAmount / 18;
+        convertedStr = `(~${Math.round(krw).toLocaleString()} ₩)`;
+    } else if (currentLang === 'zh') {
+        const cny = vndAmount / 3500;
+        convertedStr = `(~¥${cny.toFixed(1)})`;
+    } else if (currentLang === 'ru') {
+        const rub = vndAmount / 250;
+        convertedStr = `(~${Math.round(rub).toLocaleString()} ₽)`;
+    }
+    if (convertedStr) {
+        return `${vndStr} <span style="font-size: 0.85em; opacity: 0.8; font-weight: normal; margin-left: 4px;">${convertedStr}</span>`;
+    }
+    return vndStr;
+};
+
 // ── 3. CAMERA SCANNER (Live Video) ─────────────────────────────
 window.startCameraScan = async function() {
     switchTab('tab-scanner');
@@ -293,7 +317,7 @@ async function processBase64ImageAndAnalyze(base64Image) {
         if (data.status === 'success' && data.result) {
             const r = data.result;
             window.lastScannedItems = r.items_checked;
-            scanPrice.innerText = r.total_asked.toLocaleString() + " VND";
+            scanPrice.innerHTML = formatCurrency(r.total_asked);
             scanMsg.innerText = r.summary;
             
             let bHtml = "<strong>Item Breakdown:</strong><br/>";
@@ -301,7 +325,9 @@ async function processBase64ImageAndAnalyze(base64Image) {
                 const tier = item.db_tier || 'unknown';
                 bHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:4px; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.1)">
                     <span>${item.item_name}</span>
-                    <strong>${item.unit_price.toLocaleString()} VND <em style="font-size:0.8rem;opacity:0.8">(${tier.toUpperCase()})</em></strong>
+                    <div style="text-align:right">
+                        <strong>${formatCurrency(item.unit_price)} <em style="font-size:0.8rem;opacity:0.8;color:inherit;">(${tier.toUpperCase()})</em></strong>
+                    </div>
                 </div>`;
             });
             breakdown.innerHTML = bHtml;
