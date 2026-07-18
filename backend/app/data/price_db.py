@@ -407,6 +407,28 @@ def add_ambient_price(region: str, item_name: str, price_vnd: int) -> bool:
     return True
 
 
+def add_ai_crawler_price(region: str, item_name: str, price_vnd: int, source_url: str = "") -> bool:
+    """
+    Add a price scraped by the AI delivery crawler.
+    Source is tagged as 'ai_crawler'.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO price_references
+            (region, category, item_name, item_name_vi, price_vnd,
+             source, venue_type, is_verified)
+        VALUES (?, 'food', ?, ?, ?, 'ai_crawler', 'street', 1)
+    """, (region, item_name, source_url, price_vnd)) # using item_name_vi to store source_url temporarily for simplicity
+
+    conn.commit()
+    rebuild_price_stats(conn)
+    conn.close()
+    
+    logger.info(f"AI Crawler Price collected: {item_name} = {price_vnd} VND in {region} from {source_url}")
+    return True
+
 
 def search_item(query: str, region: str = "") -> list[dict]:
     """

@@ -101,6 +101,37 @@ def check_single_price(
     
     # Refuse to conclude if insufficient data
     if sample_count < settings.MIN_SAMPLE_SIZE:
+        # Fallback to AI Delivery Crawler for Real-time Web Data
+        from app.engine.delivery_crawler import crawl_delivery_price
+        crawled_price = crawl_delivery_price(item_name, region)
+        
+        if crawled_price > 0:
+            # Successfully scraped and passed all Guardrails
+            if asked_price <= crawled_price * 1.2:
+                tier = "fair"
+                msg_prefix = "Fair price."
+            elif asked_price <= crawled_price * 1.5:
+                tier = "slightly_high"
+                msg_prefix = "Slightly high."
+            else:
+                tier = "overpriced"
+                msg_prefix = "Overpriced!"
+                
+            return PriceCheckResult(
+                item_name=item_name,
+                asked_price=asked_price,
+                median_price=crawled_price,
+                mad=0.0,
+                z_score=0.0,
+                sample_count=1,
+                tier=tier,
+                confidence=0.85, # High confidence due to real-time verification
+                price_range=f"{int(crawled_price*0.9):,} - {int(crawled_price*1.2):,} VND",
+                message=f"Live Web Data: Found real-time average of {int(crawled_price):,} VND on Food Delivery Apps. {msg_prefix}",
+                source="ai_crawler",
+                last_updated="Just now",
+            )
+            
         return PriceCheckResult(
             item_name=item_name,
             asked_price=asked_price,
