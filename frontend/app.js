@@ -92,10 +92,18 @@ function updateLanguageUI(lang) {
 
 // ── 1. ONBOARDING & PERMISSIONS ──────────────────────────────
 window.startJourney = async function() {
-    if (navigator.vibrate) navigator.vibrate(30);
+    if (navigator.vibrate) try { navigator.vibrate(30); } catch(e){}
     const btn = document.getElementById('btn-start-perms');
     btn.innerHTML = "REQUESTING ACCESS...";
     btn.disabled = true;
+    
+    // Feature detection for in-app browsers (Zalo, FB Messenger block getUserMedia)
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("🚨 LỖI TRÌNH DUYỆT: Trình duyệt này (hoặc ứng dụng chat) không hỗ trợ Camera/Mic. Vui lòng bấm vào dấu 3 chấm góc phải và chọn 'Mở bằng Safari' hoặc 'Mở bằng Chrome' (Open in Browser) để sử dụng App.");
+        btn.innerHTML = "GRANT ACCESS & START";
+        btn.disabled = false;
+        return;
+    }
     
     try {
         // 1. Request Camera & Mic
@@ -105,14 +113,21 @@ window.startJourney = async function() {
         // Update UI Badges
         document.getElementById('badge-cam').classList.add('granted');
         document.getElementById('badge-mic').classList.add('granted');
-        if (navigator.vibrate) navigator.vibrate(50);
+        if (navigator.vibrate) try { navigator.vibrate(50); } catch(e){}
         
         // 2. Request GPS
         btn.innerHTML = "LOCATING...";
+        
+        if (!navigator.geolocation) {
+            alert("Trình duyệt không hỗ trợ định vị GPS.");
+            await doLocationReveal(); // Fallback
+            return;
+        }
+
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
                 document.getElementById('badge-gps').classList.add('granted');
-                if (navigator.vibrate) navigator.vibrate([50, 50]);
+                if (navigator.vibrate) try { navigator.vibrate([50, 50]); } catch(e){}
                 userLocation.lat = pos.coords.latitude;
                 userLocation.lng = pos.coords.longitude;
                 
@@ -120,13 +135,19 @@ window.startJourney = async function() {
                 setTimeout(doLocationReveal, 800);
             },
             async (err) => {
-                console.warn("GPS failed, using fallback.");
+                console.warn("GPS failed, using fallback.", err);
+                alert("Không thể lấy vị trí GPS (bạn có thể đã từ chối hoặc đang ở trong nhà). Hệ thống sẽ dùng vị trí mặc định.");
                 await doLocationReveal();
             },
-            { enableHighAccuracy: true, timeout: 5000 }
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
         );
     } catch(e) {
-        alert("Camera and Microphone permissions are required for the AI Scanner to work.");
+        console.error("Permission error:", e);
+        if (e.name === 'NotAllowedError') {
+            alert("🚨 TỪ CHỐI QUYỀN: Bạn đã từ chối cấp quyền Camera/Mic. Vui lòng vào Cài đặt (Settings) của trình duyệt để cho phép lại.");
+        } else {
+            alert("🚨 LỖI: Không thể truy cập Camera/Mic. Vui lòng đảm bảo bạn đang mở web bằng Safari/Chrome. (" + e.message + ")");
+        }
         btn.innerHTML = "GRANT ACCESS & START";
         btn.disabled = false;
     }
