@@ -393,29 +393,48 @@ window.triggerBillUpload = function() {
 window.handleBillUpload = function(event) {
     const file = event.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-        alert('Please upload an image file.');
-        event.target.value = "";
-        return;
-    }
+    
+    // Show overlay immediately so user knows it's loading
+    const overlay = document.getElementById('price-results-overlay');
+    if (overlay) overlay.style.display = 'flex';
+    const scanTitle = document.getElementById('scan-alert-title');
+    if (scanTitle) scanTitle.innerText = "PROCESSING IMAGE...";
     
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            const canvas = document.getElementById('camera-canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            const base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-            processBase64ImageAndAnalyze(base64Image);
+            try {
+                const canvas = document.getElementById('camera-canvas');
+                // Downscale image if too large (prevent mobile crash)
+                const MAX_WIDTH = 1200;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const base64Image = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+                processBase64ImageAndAnalyze(base64Image);
+            } catch (err) {
+                if (scanTitle) scanTitle.innerText = "IMAGE ERROR";
+                console.error(err);
+            }
+        };
+        img.onerror = function() {
+            if (scanTitle) scanTitle.innerText = "INVALID IMAGE";
         };
         img.src = e.target.result;
     };
     reader.onerror = function() {
-        alert('Could not read this image. Please try another file.');
-        event.target.value = "";
+        alert('Could not read this file.');
     };
     reader.readAsDataURL(file);
     event.target.value = ""; // Reset input
