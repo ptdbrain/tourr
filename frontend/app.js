@@ -412,8 +412,9 @@ async function ensureLiveSession() {
 
 function showSmartWidget(title, msg, isScam) {
     const w = document.getElementById('smart-ai-widget');
-    const t = document.getElementById('smart-ai-title');
-    const m = document.getElementById('smart-ai-msg');
+    const t = document.getElementById('widget-title');
+    const m = document.getElementById('widget-msg');
+    if (!w || !t || !m) return;
     
     t.innerText = title; m.innerText = msg;
     if (isScam) {
@@ -537,13 +538,20 @@ window.analyzeScam = async function() {
         const res = await fetch(API_BASE + '/api/v1/analyze-situation', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description: text, language: currentLang, region: region })
+            body: JSON.stringify({
+                description: text,
+                language: currentLang,
+                location: region,
+                lat: userLocation.lat,
+                lng: userLocation.lng
+            })
         });
         const data = await res.json();
         
-        if (data.status === 'success' && data.result) {
-            document.getElementById('guardian-alert-title').innerText = data.result.detected ? "SCAM DETECTED" : "AI ANALYSIS";
-            document.getElementById('guardian-alert-msg').innerText = data.result.ai_analysis || "Be careful with your belongings and negotiate clearly.";
+        if (data.status === 'success' && data.scam_assessment) {
+            const scam = data.scam_assessment;
+            document.getElementById('guardian-alert-title').innerText = scam.detected ? "SCAM DETECTED" : "AI ANALYSIS";
+            document.getElementById('guardian-alert-msg').innerText = scam.ai_analysis || scam.advice?.join('\n') || "Be careful with your belongings and negotiate clearly.";
         } else {
             document.getElementById('guardian-alert-title').innerText = "ERROR";
             document.getElementById('guardian-alert-msg').innerText = "Could not analyze the situation.";
@@ -563,12 +571,13 @@ function initSlideToSOS() {
     if (!knob || !track) return;
 
     let isDragging = false, startX = 0, currentX = 0, triggered = false;
-    const maxDragX = track.clientWidth - knob.clientWidth - 8;
+    const getMaxDragX = () => track.clientWidth - knob.clientWidth - 8;
 
     function startDrag(e) { if (triggered) return; isDragging = true; startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; knob.style.transition = 'none'; }
     function doDrag(e) {
         if (!isDragging || triggered) return;
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        const maxDragX = getMaxDragX();
         currentX = Math.max(0, Math.min(clientX - startX, maxDragX));
         knob.style.transform = `translateX(${currentX}px)`;
         if (currentX >= maxDragX * 0.95 && !triggered) triggerSOS();
@@ -584,33 +593,37 @@ function initSlideToSOS() {
 
     async function triggerSOS() {
         triggered = true;
+        const maxDragX = getMaxDragX();
         knob.style.transform = `translateX(${maxDragX}px)`; knob.style.backgroundColor = '#00FF66';
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300, 100, 300]);
 
-        const statusEl = document.getElementById('sos-dispatch-status');
-        statusEl.innerHTML = "DISPATCHING SOS WITH EVIDENCE...";
+        const panel = document.getElementById('sos-active-panel');
+        if (panel) panel.style.display = 'block';
 
         try {
-            // Sending Evidence Buffer (logs and images) along with SOS
             const payload = {
-                latitude: userLocation.lat, longitude: userLocation.lng, location_name: userLocation.name,
-                incident_type: "emergency", language: currentLang, severity: "critical",
-                evidence: window.evidenceBuffer // Attach accumulated evidence
+                latitude: userLocation.lat,
+                longitude: userLocation.lng,
+                incident_type: "emergency",
+                description: window.evidenceBuffer.transcripts.join('\n'),
+                language: currentLang,
+                severity: "critical",
+                photo_base64: window.evidenceBuffer.images[0] || ""
             };
 
             const res = await fetch(API_BASE + '/api/v1/sos', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const data = await res.json();
-            statusEl.innerHTML = `SOS SENT. EVIDENCE ATTACHED. Location shared. Call 113 NOW.`;
+            await res.json();
+            if (panel) panel.querySelector('p').innerText = "Location shared. Call 113 now.";
             window.evidenceBuffer = { images: [], transcripts: [] }; // Clear buffer after sending
         } catch(e) {
-            statusEl.innerHTML = "SOS API FAILED. CALL 113 DIRECTLY.";
+            if (panel) panel.querySelector('p').innerText = "SOS API failed. Call 113 directly.";
         }
         setTimeout(() => {
             triggered = false; knob.style.transition = 'transform 0.5s ease'; knob.style.transform = 'translateX(0)';
-            knob.style.backgroundColor = 'var(--danger-red)'; statusEl.innerHTML = "";
+            knob.style.backgroundColor = 'var(--danger-red)';
         }, 5000);
     }
 }
@@ -619,7 +632,7 @@ function initSlideToSOS() {
 function getRegionFromCoordinates(lat, lng) {
     if (lat > 20.5 && lat < 21.5 && lng > 105.0 && lng < 106.5) return 'hanoi';
     if (lat > 15.5 && lat < 16.5 && lng > 107.5 && lng < 108.5) return 'danang';
-    if (lat > 10.0 && lat < 11.0 && lng > 106.0 && lng < 107.0) return 'hcm';
+    if (lat > 10.0 && lat < 11.0 && lng > 106.0 && lng < 107.0) return 'hcmc';
     if (lat > 15.0 && lat < 16.0 && lng > 108.0 && lng < 108.5) return 'hoian';
     if (lat > 12.0 && lat < 12.5 && lng > 109.0 && lng < 109.5) return 'nhatrang';
     if (lat > 10.0 && lat < 10.5 && lng > 103.5 && lng < 104.5) return 'phuquoc';
@@ -628,7 +641,7 @@ function getRegionFromCoordinates(lat, lng) {
 
 window.dispatchReport = async function() {
     if (navigator.vibrate) navigator.vibrate(100);
-    const btn = document.querySelector('.btn-dispatch');
+    const btn = document.querySelector('#sos-active-panel .btn-danger');
     if (btn) { btn.innerHTML = "SENDING..."; btn.disabled = true; }
     
     try {
@@ -636,13 +649,27 @@ window.dispatchReport = async function() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                lat: userLocation.lat, lng: userLocation.lng, location_name: userLocation.name,
-                incident_type: "scam_report", language: currentLang, severity: "medium", evidence: window.evidenceBuffer
+                lat: userLocation.lat,
+                lng: userLocation.lng,
+                scam_type: "scam_report",
+                details: window.evidenceBuffer.transcripts.join('\n') || `Emergency report from ${userLocation.name}`,
+                authority_name: "Tourist Police"
             })
         });
         if (btn) { btn.innerHTML = "SENT TO POLICE"; btn.style.background = 'var(--neon-green)'; btn.style.color = 'black'; }
         window.evidenceBuffer = { images: [], transcripts: [] };
     } catch(e) {
         if (btn) { btn.innerHTML = "FAILED. TRY SOS."; }
+    }
+};
+
+window.cancelSOS = function() {
+    const panel = document.getElementById('sos-active-panel');
+    const knob = document.getElementById('sos-knob');
+    if (panel) panel.style.display = 'none';
+    if (knob) {
+        knob.style.transition = 'transform 0.3s ease';
+        knob.style.transform = 'translateX(0)';
+        knob.style.backgroundColor = '';
     }
 };
