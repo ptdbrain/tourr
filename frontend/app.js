@@ -321,19 +321,27 @@ window.captureAndAnalyze = async function() {
     await processBase64ImageAndAnalyze(base64Image);
 };
 
-window.analyzeSample = function(imgUrl) {
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = function() {
-        const canvas = document.getElementById('camera-canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-        processBase64ImageAndAnalyze(base64Image);
+window.handleBillUpload = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = function() {
+            const canvas = document.getElementById('camera-canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            processBase64ImageAndAnalyze(base64Image);
+        };
+        img.src = e.target.result;
     };
-    img.src = imgUrl;
+    reader.readAsDataURL(file);
+    event.target.value = ""; // Reset input
 };
 
 
