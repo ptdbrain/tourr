@@ -5,12 +5,83 @@
  */
 
 const API_BASE = ''; // Same origin -- served by FastAPI
-let currentLang = document.documentElement.getAttribute('data-lang') || 'en';
+let currentLang = localStorage.getItem('tour_resq_lang') || document.documentElement.getAttribute('data-lang') || 'en';
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Tour-resQ Engine Initialized");
     initSlideToSOS();
+    updateLanguageUI(currentLang);
+    loadTranslations(currentLang);
 });
+
+// ── 0. LANGUAGE ENGINE & SPLASH SCREEN ─────────────────────────────
+let translations = {};
+
+async function loadTranslations(lang) {
+    try {
+        const res = await fetch(API_BASE + `/api/v1/translations?lang=${lang}`);
+        const data = await res.json();
+        if (data.status === 'success') {
+            translations = data.translations;
+            applyTranslations();
+        }
+    } catch(e) {
+        console.error("Failed to load translations", e);
+    }
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[key]) {
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                el.placeholder = translations[key];
+            } else {
+                el.innerText = translations[key];
+            }
+        }
+    });
+}
+
+window.selectLanguage = function(lang) {
+    if (navigator.vibrate) navigator.vibrate(20);
+    currentLang = lang;
+    localStorage.setItem('tour_resq_lang', lang);
+    updateLanguageUI(lang);
+    loadTranslations(lang);
+};
+
+function updateLanguageUI(lang) {
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${lang}'`)) {
+            btn.classList.add('active');
+        }
+    });
+    document.documentElement.lang = lang;
+    document.documentElement.setAttribute('data-lang', lang);
+}
+
+window.startJourney = function() {
+    if (navigator.vibrate) navigator.vibrate(30);
+    
+    // Hide home tab, show scanner tab
+    document.getElementById('tab-home').classList.remove('active');
+    
+    // Show nav bar
+    const nav = document.getElementById('main-nav');
+    if (nav) nav.classList.remove('hidden');
+    
+    // Ensure the tab item is visually active
+    switchTab('tab-scanner');
+    
+    // Pulse focus frame
+    const frame = document.querySelector('.focus-frame');
+    if (frame) {
+        frame.style.transform = 'scale(1.05)';
+        setTimeout(() => { frame.style.transform = 'scale(1)'; }, 300);
+    }
+};
 
 // ── 1. TAB NAVIGATION ───────────────────────────────────────────────
 function switchTab(tabId) {
