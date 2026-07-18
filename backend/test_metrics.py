@@ -20,14 +20,25 @@ def measure_pricing_metrics():
     fair_prices = [
         ("pho", 35000), ("pho", 45000), ("pho", 55000), ("pho", 65000),
         ("banh_mi", 15000), ("banh_mi", 25000), ("banh_mi", 30000),
-        ("pho", 40000), ("banh_mi", 20000)
+        ("pho", 40000), ("banh_mi", 20000),
+        ("coffee", 25000), ("coffee", 35000), ("coffee", 40000), ("coffee", 30000),
+        ("taxi", 15000), ("taxi", 12000), ("taxi", 18000), ("taxi", 20000),
+        ("pho", 50000), ("pho", 60000), ("banh_mi", 18000), ("banh_mi", 22000),
+        ("coffee", 28000), ("coffee", 32000), ("taxi", 16000), ("taxi", 14000),
+        ("pho", 38000), ("pho", 42000), ("banh_mi", 28000), ("banh_mi", 24000),
+        ("coffee", 38000), ("taxi", 17000)
     ]
     
     # True positives (Scam/Overpriced) -> Should be "overpriced" or "slightly_high"
     over_prices = [
         ("pho", 150000), ("pho", 300000), ("pho", 500000),
         ("banh_mi", 120000), ("banh_mi", 150000),
-        ("pho", 120000), ("banh_mi", 90000)
+        ("pho", 120000), ("banh_mi", 90000),
+        ("coffee", 100000), ("coffee", 150000), ("coffee", 200000),
+        ("taxi", 50000), ("taxi", 80000), ("taxi", 100000), ("taxi", 150000),
+        ("pho", 200000), ("pho", 250000), ("banh_mi", 100000), ("banh_mi", 180000),
+        ("coffee", 120000), ("coffee", 250000), ("taxi", 70000), ("taxi", 120000),
+        ("pho", 400000), ("banh_mi", 130000), ("coffee", 180000), ("taxi", 90000)
     ]
 
     false_positives = 0

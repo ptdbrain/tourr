@@ -210,8 +210,8 @@ async def analyze_price_context(
         return None
 
     genai.configure(api_key=settings.gemini_key)
-    # Using Gemini 1.5 Pro or Flash to support response_schema
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    # Using Gemini 2.5 Flash to support response_schema
+    model = genai.GenerativeModel("gemini-2.5-flash")
 
     prompt = f"""You are a hyper-local pricing expert in Vietnam.
 Analyze the following tourist interaction: "{description}"
@@ -278,14 +278,14 @@ class OCRItem(BaseModel):
     item_name: str = Field(description="The item name in English (e.g. 'pho', 'beer', 'taxi ride')")
     item_name_vi: str = Field(description="The item name in Vietnamese if visible (e.g. 'phở', 'bia')")
     price_vnd: float = Field(description="The price in VND. Convert from 'k' notation (e.g. 45k = 45000).")
-    quantity: float = Field(default=1.0, description="Quantity if specified, otherwise 1.0")
-    unit: str = Field(default="item", description="Unit of measurement (e.g. 'item', '100g', 'kg', 'plate')")
+    quantity: float = Field(description="Quantity if specified, otherwise 1.0")
+    unit: str = Field(description="Unit of measurement (e.g. 'item', '100g', 'kg', 'plate')")
 
 class OCRExtractionResult(BaseModel):
     """Structured extraction from an image."""
     items: list[OCRItem] = Field(description="All items with prices found in the image")
-    currency_detected: str = Field(default="VND", description="The currency detected (VND, USD, etc.)")
-    language_detected: str = Field(default="vi", description="Primary language of the menu/receipt")
+    currency_detected: str = Field(description="The currency detected (VND, USD, etc.)")
+    language_detected: str = Field(description="Primary language of the menu/receipt")
 
 class OCRPriceCheckResult(BaseModel):
     """Complete result of OCR + price verification."""
@@ -312,7 +312,7 @@ async def check_price_from_image(
         return None
 
     genai.configure(api_key=settings.gemini_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
 
     prompt = """You are an OCR expert analyzing a Vietnamese restaurant menu, receipt, or price board.
 
@@ -321,6 +321,7 @@ Extract ALL items with their prices. Pay close attention to:
 2. Currency symbols - is this VND or USD or another currency?
 3. Quantity notations
 4. If prices use 'k' notation, convert to full VND (45k = 45000)
+5. CRITICAL: DO NOT extract the 'Total', 'Tổng cộng', 'Subtotal', or 'Thanh toán' rows as separate items. Only extract the actual purchased goods/services.
 
 Return a structured list of all items found."""
 
@@ -347,9 +348,18 @@ Return a structured list of all items found."""
         worst_tier = "fair"
         tier_rank = {"fair": 0, "insufficient_data": 1, "slightly_high": 2, "overpriced": 3}
 
+        from app.data.price_db import search_item
+        
         for ocr_item in extraction.items:
-            # Normalize item name for DB lookup
-            lookup_name = ocr_item.item_name.lower().replace(" ", "_")
+            # Search DB for canonical item name to prevent false "insufficient_data"
+            search_results = search_item(ocr_item.item_name_vi, region) if ocr_item.item_name_vi else []
+            if not search_results:
+                search_results = search_item(ocr_item.item_name, region)
+                
+            if search_results:
+                lookup_name = search_results[0]["item_name"]
+            else:
+                lookup_name = ocr_item.item_name.lower().replace(" ", "_")
             unit_price = ocr_item.price_vnd / max(ocr_item.quantity, 1.0)
 
             # If unit is per-weight, flag it

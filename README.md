@@ -8,9 +8,9 @@
 [![Gemini](https://img.shields.io/badge/Gemini-2.0_Flash-purple?style=flat-square&logo=google)](https://ai.google.dev)
 
 ## 📌 VAIC 2026 Deliverables
-- **Live Deployed URL:** [https://tour-resq.example.com](https://tour-resq.example.com)
-- **Demo Video (≤ 5 min):** [Watch on YouTube](https://youtube.com)
-- **Presentation Slides:** [View on Canva](https://canva.com)
+- **Live Deployed URL:** [DEPLOYED_URL_PENDING](https://tour-resq.example.com) <!-- TODO: Thay thế bằng domain thực tế trước khi nộp -->
+- **Demo Video (≤ 5 min):** [YOUTUBE_LINK_PENDING](https://youtube.com) <!-- TODO: Cập nhật link YouTube thật -->
+- **Presentation Slides:** [CANVA_LINK_PENDING](https://canva.com) <!-- TODO: Cập nhật link Canva thật -->
 - **GitHub Repository:** [Public Repo](https://github.com/dinhmanhcvp/Tour-resQ)
 - **AI Collaboration Log:** [ai_collaboration_log.md](./ai_collaboration_log.md)
 

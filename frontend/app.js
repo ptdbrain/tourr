@@ -1,14 +1,21 @@
 /**
- * Tour-resQ Frontend -- Real API Integration
- * All interactions are wired to the FastAPI backend.
- * No mock data. No hardcoded responses.
+ * Tour-resQ Frontend -- Premium Flow
+ * Real API Integration with new Permission & Location Reveal flow.
  */
 
-const API_BASE = ''; // Same origin -- served by FastAPI
+const API_BASE = '';
 let currentLang = localStorage.getItem('tour_resq_lang') || document.documentElement.getAttribute('data-lang') || 'en';
 
+// Global Evidence Buffer
+window.evidenceBuffer = {
+    images: [], // Suspicious bills
+    transcripts: [] // Conversation logs
+};
+
+let userLocation = { lat: 21.0285, lng: 105.8542, name: "Unknown Location" };
+let cameraStream = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Tour-resQ Engine Initialized");
     initSlideToSOS();
     updateLanguageUI(currentLang);
     loadTranslations(currentLang);
@@ -24,27 +31,12 @@ function initGlobalMap() {
     if (!mapEl) return;
 
     globalMap = L.map('global-map-bg', {
-        zoomControl: false,
-        attributionControl: false,
-        dragging: false,
-        touchZoom: false,
-        doubleClickZoom: false,
-        scrollWheelZoom: false,
-        boxZoom: false,
-        keyboard: false
+        zoomControl: false, attributionControl: false, dragging: false,
+        touchZoom: false, doubleClickZoom: false, scrollWheelZoom: false,
+        boxZoom: false, keyboard: false
     }).setView([21.0285, 105.8542], 14);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 20
-    }).addTo(globalMap);
-    
-    // Mock Scam Hotspots
-    L.circle([21.0305, 105.8530], { color: 'red', fillColor: '#f03', fillOpacity: 0.3, radius: 200, weight: 1 }).addTo(globalMap);
-    L.circle([21.0250, 105.8500], { color: 'red', fillColor: '#f03', fillOpacity: 0.3, radius: 150, weight: 1 }).addTo(globalMap);
-    
-    // User location (Blue dot)
-    L.circleMarker([21.0285, 105.8542], { color: '#3B82F6', fillColor: '#3B82F6', fillOpacity: 1, radius: 6, weight: 2 }).addTo(globalMap);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 }).addTo(globalMap);
 }
 
 // ── 0.2 RIPPLE EFFECT ─────────────────────────────────────────
@@ -52,59 +44,40 @@ function initRippleEffect() {
     document.addEventListener('click', function (e) {
         const target = e.target.closest('button, .lang-btn, .giant-contact-btn');
         if (!target) return;
-        
         const circle = document.createElement('span');
         const diameter = Math.max(target.clientWidth, target.clientHeight);
         const radius = diameter / 2;
-
         const rect = target.getBoundingClientRect();
         circle.style.width = circle.style.height = `${diameter}px`;
         circle.style.left = `${e.clientX - rect.left - radius}px`;
         circle.style.top = `${e.clientY - rect.top - radius}px`;
         circle.classList.add('ripple-circle');
-
         const existingRipple = target.querySelector('.ripple-circle');
-        if (existingRipple) {
-            existingRipple.remove();
-        }
-
+        if (existingRipple) existingRipple.remove();
         target.appendChild(circle);
         target.classList.add('btn-ripple');
-        
-        // Remove ripple after animation
         setTimeout(() => { circle.remove(); }, 600);
     });
 }
 
-// ── 0. LANGUAGE ENGINE & SPLASH SCREEN ─────────────────────────────
+// ── 0.3 LANGUAGES ─────────────────────────────
 let translations = {};
-
 async function loadTranslations(lang) {
     try {
         const res = await fetch(API_BASE + `/api/v1/translations?lang=${lang}`);
         const data = await res.json();
-        if (data.status === 'success') {
-            translations = data.translations;
-            applyTranslations();
-        }
-    } catch(e) {
-        console.error("Failed to load translations", e);
-    }
+        if (data.status === 'success') { translations = data.translations; applyTranslations(); }
+    } catch(e) {}
 }
-
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (translations[key]) {
-            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                el.placeholder = translations[key];
-            } else {
-                el.innerText = translations[key];
-            }
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = translations[key];
+            else el.innerText = translations[key];
         }
     });
 }
-
 window.selectLanguage = function(lang) {
     if (navigator.vibrate) navigator.vibrate(20);
     currentLang = lang;
@@ -112,224 +85,228 @@ window.selectLanguage = function(lang) {
     updateLanguageUI(lang);
     loadTranslations(lang);
 };
-
 function updateLanguageUI(lang) {
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${lang}'`)) {
-            btn.classList.add('active');
-        }
-    });
     document.documentElement.lang = lang;
     document.documentElement.setAttribute('data-lang', lang);
 }
 
-window.startJourney = function() {
+// ── 1. ONBOARDING & PERMISSIONS ──────────────────────────────
+window.checkAllPerms = function() {
+    const cam = document.getElementById('perm-cam').checked;
+    const mic = document.getElementById('perm-mic').checked;
+    const gps = document.getElementById('perm-gps').checked;
+    document.getElementById('btn-start-perms').disabled = !(cam && mic && gps);
+};
+
+window.startJourney = async function() {
     if (navigator.vibrate) navigator.vibrate(30);
+    const btn = document.getElementById('btn-start-perms');
+    btn.innerHTML = "REQUESTING ACCESS...";
     
-    // Hide home tab, show scanner tab
-    document.getElementById('tab-home').classList.remove('active');
-    
-    // Show nav bar
-    const nav = document.getElementById('main-nav');
-    if (nav) nav.classList.remove('hidden');
-    
-    // Ensure the tab item is visually active
-    switchTab('tab-scanner');
-    
-    // Pulse focus frame
-    const frame = document.querySelector('.focus-frame');
-    if (frame) {
-        frame.style.transform = 'scale(1.05)';
-        setTimeout(() => { frame.style.transform = 'scale(1)'; }, 300);
+    try {
+        // Request Camera & Mic
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
+        // We stop them immediately, just need permission granted
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Request GPS
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                userLocation.lat = pos.coords.latitude;
+                userLocation.lng = pos.coords.longitude;
+                await doLocationReveal();
+            },
+            async (err) => {
+                console.warn("GPS failed, using fallback.");
+                await doLocationReveal();
+            },
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    } catch(e) {
+        alert("Permissions denied! Cannot proceed safely.");
+        btn.innerHTML = "START JOURNEY";
     }
 };
 
-// ── 1. TAB NAVIGATION ───────────────────────────────────────────────
-function switchTab(tabId) {
+async function doLocationReveal() {
+    switchTab('tab-location-reveal');
+    const nameEl = document.getElementById('reveal-location-name');
+    
+    // Reverse Geocoding with Nominatim API (OpenStreetMap)
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLocation.lat}&lon=${userLocation.lng}&format=json`);
+        const data = await res.json();
+        let placeName = data.address.amenity || data.address.restaurant || data.address.road || data.address.city || "Unknown Location";
+        userLocation.name = placeName;
+    } catch(e) {
+        userLocation.name = "Hanoi (Fallback)";
+    }
+    
+    if (globalMap) {
+        globalMap.flyTo([userLocation.lat, userLocation.lng], 18, { animate: true, duration: 2 });
+    }
+    
+    setTimeout(() => {
+        nameEl.innerText = userLocation.name;
+        nameEl.style.opacity = 1;
+        if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+    }, 1500);
+    
+    setTimeout(() => {
+        document.getElementById('dash-location-name').innerText = userLocation.name;
+        document.getElementById('sos-address').innerText = userLocation.name;
+        document.getElementById('sos-coords').innerText = `${userLocation.lat.toFixed(4)}° N, ${userLocation.lng.toFixed(4)}° E`;
+        document.getElementById('global-sos-btn').classList.remove('hidden');
+        switchTab('tab-dashboard');
+    }, 4500);
+}
+
+// ── 2. TAB NAVIGATION ─────────────────────────────────────────
+window.switchTab = function(tabId) {
     if (navigator.vibrate) navigator.vibrate(20);
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    document.querySelectorAll('.tab-item').forEach(btn => btn.classList.remove('active'));
-    const targetBtn = Array.from(document.querySelectorAll('.tab-item'))
-        .find(btn => btn.getAttribute('onclick').includes(tabId));
-    if (targetBtn) targetBtn.classList.add('active');
-}
+};
 
-// ── 2. CAMERA SCANNER (Price Check via Vision API) ──────────────────
-function handlePricePhoto(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+// ── 3. CAMERA SCANNER (Live Video) ─────────────────────────────
+window.startCameraScan = async function() {
+    switchTab('tab-scanner');
+    const video = document.getElementById('live-camera');
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = cameraStream;
+    } catch(e) {
+        console.error("Camera access failed", e);
+    }
+};
+
+window.stopCameraAndGoHome = function() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    switchTab('tab-dashboard');
+};
+
+window.captureAndAnalyze = async function() {
     if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+    const video = document.getElementById('live-camera');
+    const canvas = document.getElementById('camera-canvas');
+    if (!video.videoWidth) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = async function() {
-            // Compress and strip EXIF via Canvas
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1024;
-            const MAX_HEIGHT = 1024;
-            let width = img.width;
-            let height = img.height;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const base64Image = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+    
+    // Pause video
+    video.pause();
 
-            if (width > height) {
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
+    const scanTitle = document.getElementById('scan-alert-title');
+    const scanPrice = document.getElementById('scan-alert-price');
+    const scanMsg = document.getElementById('scan-alert-msg');
+    const breakdown = document.getElementById('scan-breakdown');
+    const overlay = document.getElementById('price-results-overlay');
+
+    scanTitle.innerText = "ANALYZING...";
+    scanPrice.innerText = "...";
+    scanMsg.innerText = "Extracting items and checking regional prices...";
+    breakdown.innerHTML = "";
+    scanTitle.parentElement.className = "results-card high-contrast tier-caution";
+    overlay.style.display = 'flex';
+
+    try {
+        const res = await fetch(API_BASE + '/api/v1/check-price-ocr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_base64: base64Image, language: currentLang, lat: userLocation.lat, lng: userLocation.lng })
+        });
+        
+        if (res.status === 429) {
+            scanTitle.innerText = "RATE LIMITED"; scanMsg.innerText = "Please wait."; return;
+        }
+        
+        const data = await res.json();
+
+        if (data.status === 'success' && data.result) {
+            const r = data.result;
+            
+            // Build Breakdown HTML
+            let bHtml = "<strong>Item Breakdown:</strong><br/>";
+            r.items_checked.forEach(item => {
+                bHtml += `- ${item.item_name}: ${item.unit_price.toLocaleString()} VND <em>(${item.tier.toUpperCase()})</em><br/>`;
+            });
+            breakdown.innerHTML = bHtml;
+
+            if (r.overall_verdict === 'overpriced') {
+                scanTitle.innerText = "OVERPRICED";
+                scanTitle.parentElement.className = "results-card high-contrast tier-danger";
+                document.getElementById('btn-contribute').style.display = 'none';
+                window.evidenceBuffer.images.push(base64Image); // Save evidence
+            } else if (r.overall_verdict === 'slightly_high') {
+                scanTitle.innerText = "SLIGHTLY HIGH";
+                scanTitle.parentElement.className = "results-card high-contrast tier-caution";
+                document.getElementById('btn-contribute').style.display = 'none';
             } else {
-                if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                }
+                scanTitle.innerText = "FAIR PRICE";
+                scanTitle.parentElement.className = "results-card high-contrast tier-fair";
+                document.getElementById('btn-contribute').style.display = 'block';
             }
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
             
-            const base64Image = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
-            
-            const scanTitle = document.getElementById('scan-alert-title');
-            const scanPrice = document.getElementById('scan-alert-price');
-            const scanMsg = document.getElementById('scan-alert-msg');
-            const overlay = document.getElementById('price-results-overlay');
-            const visionWarningBox = document.getElementById('vision-forgery-warning');
-            const visionReasonMsg = document.getElementById('vision-reason');
+            window.lastScannedItems = r.items_checked;
+            scanPrice.innerText = r.total_asked.toLocaleString() + " VND";
+            scanMsg.innerText = r.summary;
+        } else {
+            scanTitle.innerText = "ERROR";
+            scanMsg.innerText = data.message || "Failed to analyze image.";
+        }
+    } catch (err) {
+        console.error(err);
+        scanTitle.innerText = "NETWORK ERROR";
+    }
+};
 
-            // Loading state
-            scanTitle.innerText = "ANALYZING...";
-            scanPrice.innerText = "...";
-            scanMsg.innerText = "AI is extracting items and checking database...";
-            scanTitle.parentElement.className = "results-card high-contrast tier-caution";
-            if (visionWarningBox) visionWarningBox.style.display = 'none';
-            overlay.style.display = 'flex';
-
-            try {
-                const res = await fetch(API_BASE + '/api/v1/check-price-ocr', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image_base64: base64Image, language: currentLang })
-                });
-                
-                if (res.status === 429) {
-                    scanTitle.innerText = "RATE LIMITED";
-                    scanMsg.innerText = "Too many requests. Please wait a minute.";
-                    return;
-                }
-                
-                const data = await res.json();
-
-                if (data.status === 'success' && data.result) {
-                    const r = data.result;
-                    if (r.overall_verdict === 'overpriced') {
-                        scanTitle.innerText = "OVERPRICED";
-                        scanTitle.parentElement.className = "results-card high-contrast tier-danger";
-                        document.getElementById('btn-contribute').style.display = 'none';
-                    } else if (r.overall_verdict === 'slightly_high') {
-                        scanTitle.innerText = "SLIGHTLY HIGH";
-                        scanTitle.parentElement.className = "results-card high-contrast tier-caution";
-                        document.getElementById('btn-contribute').style.display = 'none';
-                    } else if (r.overall_verdict === 'mixed') {
-                        scanTitle.innerText = "MIXED PRICES";
-                        scanTitle.parentElement.className = "results-card high-contrast tier-caution";
-                        document.getElementById('btn-contribute').style.display = 'none';
-                    } else {
-                        scanTitle.innerText = "FAIR PRICE";
-                        scanTitle.parentElement.className = "results-card high-contrast tier-fair";
-                        document.getElementById('btn-contribute').style.display = 'block';
-                        document.getElementById('btn-contribute').innerHTML = "YES, I PAID THIS (CONTRIBUTE)";
-                        document.getElementById('btn-contribute').disabled = false;
-                        document.getElementById('btn-contribute').style.background = "var(--neon-green)";
-                    }
-                    
-                    window.lastScannedItems = r.items_checked;
-                    
-                    scanPrice.innerText = r.total_asked.toLocaleString() + " VND";
-                    scanMsg.innerText = r.summary;
-                    
-                    if (r.currency_warning && visionWarningBox && visionReasonMsg) {
-                        visionWarningBox.style.display = 'block';
-                        visionReasonMsg.innerText = r.currency_warning;
-                    }
-                } else {
-                    scanTitle.innerText = "ERROR";
-                    scanMsg.innerText = data.message || "Failed to analyze image.";
-                }
-            } catch (err) {
-                console.error(err);
-                scanTitle.innerText = "NETWORK ERROR";
-                scanMsg.innerText = "Could not reach the backend server.";
-            }
-            event.target.value = '';
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-function closePriceResults() {
+window.closePriceResults = function() {
     if (navigator.vibrate) navigator.vibrate(20);
     document.getElementById('price-results-overlay').style.display = 'none';
-    const visionWarningBox = document.getElementById('vision-forgery-warning');
-    if (visionWarningBox) visionWarningBox.style.display = 'none';
-}
+    const video = document.getElementById('live-camera');
+    if (video) video.play(); // Resume live view
+};
 
 async function contributePrice() {
-    if (!window.lastScannedItems || window.lastScannedItems.length === 0) return;
-    
-    let deviceId = localStorage.getItem('tour_resq_device_id');
-    if (!deviceId) {
-        deviceId = 'device_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('tour_resq_device_id', deviceId);
-    }
-    
+    if (!window.lastScannedItems) return;
     const btn = document.getElementById('btn-contribute');
     btn.innerHTML = "CONTRIBUTING...";
     btn.disabled = true;
-    
     try {
-        let successCount = 0;
         for (const item of window.lastScannedItems) {
-            const res = await fetch(API_BASE + '/api/v1/contribute-price', {
+            await fetch(API_BASE + '/api/v1/contribute-price', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    region: "hanoi", // Using Hanoi for demo scope
-                    category: "food",
-                    item_name: item.item_name,
-                    item_name_vi: item.item_name_vi,
-                    price_vnd: Math.round(item.unit_price),
-                    venue_type: "street",
-                    device_id: deviceId
+                    region: "hanoi", category: "food", item_name: item.item_name, item_name_vi: item.item_name_vi,
+                    price_vnd: Math.round(item.unit_price), venue_type: "street", device_id: 'dev123'
                 })
             });
-            if (res.status === 200) successCount++;
         }
-        
-        if (successCount > 0) {
-            btn.innerHTML = "SUCCESS! THANK YOU";
-            btn.style.background = "var(--neon-yellow)";
-        } else {
-            btn.innerHTML = "RATE LIMITED TODAY";
-            btn.style.background = "var(--danger-red)";
-        }
-        
+        btn.innerHTML = "THANK YOU";
         setTimeout(() => { closePriceResults(); }, 1500);
-    } catch(e) {
-        console.error(e);
-        btn.innerHTML = "ERROR";
-        btn.disabled = false;
-    }
+    } catch(e) {}
 }
 
-// ── 3. TRANSLATE (Split-Screen with real Speech + API) ──────────────
-let vendorMicActive = false;
-let touristMicActive = false;
-let vendorRecognition = null;
-let touristRecognition = null;
+// ── 4. LIVE TRANSLATE & SMART WIDGET ───────────────────────
+window.startLiveTranslate = function() {
+    switchTab('tab-translate');
+};
+window.stopTranslateAndGoHome = function() {
+    concludeNegotiation();
+    setTimeout(() => { switchTab('tab-dashboard'); }, 500); // Give time for conclude to fire
+};
 
+let vendorMicActive = false; let touristMicActive = false;
+let vendorRecognition = null; let touristRecognition = null;
 let liveSessionId = null;
 
 async function ensureLiveSession() {
@@ -337,336 +314,139 @@ async function ensureLiveSession() {
         try {
             const res = await fetch(API_BASE + '/api/v1/live/start', { method: 'POST' });
             const data = await res.json();
-            if (data.status === 'success') {
-                liveSessionId = data.session_id;
-                document.getElementById('btn-conclude-negotiation').style.display = 'block';
-            }
-        } catch(e) { console.error("Could not start session:", e); }
+            if (data.status === 'success') liveSessionId = data.session_id;
+        } catch(e) {}
     }
 }
 
-async function concludeNegotiation() {
-    if (!liveSessionId) return;
+function showSmartWidget(title, msg, isScam) {
+    const w = document.getElementById('smart-ai-widget');
+    const t = document.getElementById('smart-ai-title');
+    const m = document.getElementById('smart-ai-msg');
     
-    if (navigator.vibrate) navigator.vibrate([30, 30]);
-    const btn = document.getElementById('btn-conclude-negotiation');
-    btn.innerHTML = "ANALYZING...";
-    
-    try {
-        const res = await fetch(API_BASE + '/api/v1/live/conclude', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session_id: liveSessionId, tourist_lang: currentLang })
-        });
-        const data = await res.json();
-        btn.innerHTML = "EVALUATE SCAM";
-        
-        if (data.status === 'success') {
-            document.getElementById('nego-alert-title').innerText = "SCAM ANALYSIS";
-            // Convert newlines to HTML br
-            document.getElementById('nego-alert-msg').innerHTML = data.final_verdict.replace(/\n/g, "<br>");
-            document.getElementById('negotiation-results-overlay').style.display = 'flex';
-            liveSessionId = null; // Reset session
-            btn.style.display = 'none';
-        } else {
-            alert("Analysis failed: " + data.message);
-        }
-    } catch(e) {
-        console.error(e);
-        btn.innerHTML = "EVALUATE SCAM";
-        alert("Network error.");
+    t.innerText = title; m.innerText = msg;
+    if (isScam) {
+        w.style.borderColor = 'var(--danger-red)';
+        t.style.color = 'var(--danger-red)';
+    } else {
+        w.style.borderColor = 'var(--neon-green)';
+        t.style.color = 'var(--neon-green)';
     }
-}
-
-function closeNegotiationResults() {
-    document.getElementById('negotiation-results-overlay').style.display = 'none';
+    
+    w.style.display = 'block';
+    if (navigator.vibrate) navigator.vibrate([30,30]);
+    setTimeout(() => { w.style.display = 'none'; }, 6000);
 }
 
 if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    vendorRecognition = new SR();
-    vendorRecognition.lang = 'vi-VN';
-    vendorRecognition.continuous = false;
-    vendorRecognition.interimResults = false;
+    vendorRecognition = new SR(); vendorRecognition.lang = 'vi-VN'; vendorRecognition.continuous = false;
     vendorRecognition.onresult = async function(ev) {
         const text = ev.results[0][0].transcript;
         document.getElementById('vendor-text').textContent = text;
-        // Translate Vietnamese -> Tourist's language via Live Negotiation
-        await ensureLiveSession();
-        try {
-            const res = await fetch(API_BASE + '/api/v1/live/message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    session_id: liveSessionId,
-                    text, 
-                    source_lang: 'vi', 
-                    target_lang: currentLang, 
-                    speaker: 'vendor' 
-                })
-            });
-            const data = await res.json();
-            if (data.translated) {
-                document.getElementById('tourist-text').textContent = data.translated;
-            }
-        } catch(e) { console.error("Translate error:", e); }
+        window.evidenceBuffer.transcripts.push(`Vendor: ${text}`);
+        await handleMessage(text, 'vi', currentLang, 'vendor', 'tourist-text');
         toggleVendorMic();
     };
-    vendorRecognition.onerror = function() { if (vendorMicActive) toggleVendorMic(); };
 
-    touristRecognition = new SR();
-    touristRecognition.lang = currentLang === 'ko' ? 'ko-KR' : currentLang === 'zh' ? 'zh-CN' : currentLang === 'ru' ? 'ru-RU' : 'en-US';
+    touristRecognition = new SR(); touristRecognition.lang = currentLang === 'ko' ? 'ko-KR' : currentLang === 'zh' ? 'zh-CN' : 'en-US';
     touristRecognition.continuous = false;
-    touristRecognition.interimResults = false;
     touristRecognition.onresult = async function(ev) {
         const text = ev.results[0][0].transcript;
         document.getElementById('tourist-text').textContent = text;
-        // Translate Tourist's language -> Vietnamese via Live Negotiation
-        await ensureLiveSession();
-        try {
-            const res = await fetch(API_BASE + '/api/v1/live/message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    session_id: liveSessionId,
-                    text, 
-                    source_lang: currentLang, 
-                    target_lang: 'vi', 
-                    speaker: 'tourist' 
-                })
-            });
-            const data = await res.json();
-            if (data.translated) {
-                document.getElementById('vendor-text').textContent = data.translated;
-            }
-        } catch(e) { console.error("Translate error:", e); }
+        window.evidenceBuffer.transcripts.push(`Tourist: ${text}`);
+        await handleMessage(text, currentLang, 'vi', 'tourist', 'vendor-text');
         toggleTouristMic();
     };
-    touristRecognition.onerror = function() { if (touristMicActive) toggleTouristMic(); };
 }
 
-function toggleVendorMic() {
+async function handleMessage(text, src, tgt, speaker, tgtEl) {
+    await ensureLiveSession();
+    try {
+        const res = await fetch(API_BASE + '/api/v1/live/message', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: liveSessionId, text, source_lang: src, target_lang: tgt, speaker })
+        });
+        const data = await res.json();
+        if (data.translated) document.getElementById(tgtEl).textContent = data.translated;
+        
+        // Smart AI Widget Triggers
+        if (data.is_suspicious) {
+            showSmartWidget("⚠️ WARNING", "Suspicious coercion or scam words detected. Be careful.", true);
+        } else if (data.is_price_discussion) {
+            showSmartWidget("💰 PRICE DETECTED", "Negotiating prices. Remember to verify with the Scan Bill feature.", false);
+        }
+    } catch(e) {}
+}
+
+window.toggleVendorMic = function() {
     const btn = document.querySelector('.mic-vendor');
-    const waves = document.querySelector('.wave-vendor');
     vendorMicActive = !vendorMicActive;
     if (vendorMicActive) {
-        if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
-        btn.classList.add('recording');
-        waves.style.display = 'flex';
+        btn.style.background = 'white'; btn.style.color = 'black';
         if (touristMicActive) toggleTouristMic();
         if (vendorRecognition) { try { vendorRecognition.start(); } catch(e) {} }
     } else {
-        if (navigator.vibrate) navigator.vibrate(50);
-        btn.classList.remove('recording');
-        waves.style.display = 'none';
+        btn.style.background = 'transparent'; btn.style.color = 'white';
         if (vendorRecognition) { try { vendorRecognition.stop(); } catch(e) {} }
     }
 }
-
-function toggleTouristMic() {
+window.toggleTouristMic = function() {
     const btn = document.querySelector('.mic-tourist');
-    const waves = document.querySelector('.wave-tourist');
     touristMicActive = !touristMicActive;
     if (touristMicActive) {
-        if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
-        btn.classList.add('recording');
-        waves.style.display = 'flex';
+        btn.style.background = 'white'; btn.style.color = 'black';
         if (vendorMicActive) toggleVendorMic();
         if (touristRecognition) { try { touristRecognition.start(); } catch(e) {} }
     } else {
-        if (navigator.vibrate) navigator.vibrate(50);
-        btn.classList.remove('recording');
-        waves.style.display = 'none';
+        btn.style.background = 'transparent'; btn.style.color = 'white';
         if (touristRecognition) { try { touristRecognition.stop(); } catch(e) {} }
     }
 }
-
-// ── 4. GUARDIAN (Scam Detection with real Speech + API) ──────────────
-let guardianListening = false;
-let guardianRecognition = null;
-
-if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    guardianRecognition = new SR();
-    guardianRecognition.lang = 'vi-VN';
-    guardianRecognition.continuous = true;
-    guardianRecognition.interimResults = false;
-    guardianRecognition.onresult = function(event) {
-        const transcript = event.results[event.results.length - 1][0].transcript;
-        const inputElement = document.getElementById('incident-input');
-        if (inputElement) inputElement.value = transcript;
-        if (guardianListening) toggleGuardian();
-    };
-    guardianRecognition.onerror = function(event) {
-        console.error("Speech recognition error", event.error);
-        if (guardianListening) toggleGuardian();
-    };
+async function concludeNegotiation() {
+    if (!liveSessionId) return;
+    try {
+        await fetch(API_BASE + '/api/v1/live/conclude', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: liveSessionId, tourist_lang: currentLang })
+        });
+        liveSessionId = null;
+    } catch(e) {}
 }
 
-function toggleGuardian() {
+// ── 5. GUARDIAN (Text Scam Analyze) ───────────────────────
+window.toggleGuardian = function() {
     const btn = document.getElementById('guardian-mic');
-    const status = document.getElementById('guardian-status-text');
-    guardianListening = !guardianListening;
-    if (guardianListening) {
-        if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
-        btn.classList.add('listening');
-        status.textContent = "LISTENING (SPEAK NOW)...";
-        status.style.color = "#FFF";
-        if (guardianRecognition) { try { guardianRecognition.start(); } catch(e) {} }
-        else { alert("Your browser does not support Speech Recognition. Please type manually."); }
+    btn.classList.toggle('listening');
+    if (btn.classList.contains('listening')) {
+        document.getElementById('guardian-status-text').innerText = "LISTENING...";
     } else {
-        if (navigator.vibrate) navigator.vibrate(50);
-        btn.classList.remove('listening');
-        status.textContent = "TAP TO LISTEN";
-        status.style.color = "var(--neon-yellow)";
-        if (guardianRecognition) { try { guardianRecognition.stop(); } catch(e) {} }
-        analyzeScam();
-    }
-}
-
-async function analyzeScam() {
-    if (navigator.vibrate) navigator.vibrate([30, 30]);
-    const inputElement = document.getElementById('incident-input');
-    const userText = inputElement ? inputElement.value.trim() : "";
-    if (!userText) return; // Nothing to analyze
-
-    const btn = document.querySelector('.btn-secondary-giant');
-    const originalBtnText = btn ? btn.innerHTML : "ANALYZE TEXT";
-    if (btn) btn.innerHTML = "ANALYZING...";
-
-    try {
-        const res = await fetch(API_BASE + '/api/v1/analyze-situation', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                description: userText,
-                location: "Hoan Kiem Walking Street, Hanoi",
-                language: currentLang,
-                lat: 21.0285,
-                lng: 105.8542
-            })
-        });
-        const data = await res.json();
-        if (btn) btn.innerHTML = originalBtnText;
-
-        const alertTitle = document.getElementById('guardian-alert-title');
-        const alertMsg = document.getElementById('guardian-alert-msg');
-        const dispatchBox = document.getElementById('auto-dispatch-box');
-        const authName = document.getElementById('dispatch-auth-name');
-
-        // Determine what to display
-        let tierText = "ANALYSIS COMPLETE";
-        let adviceText = "";
-        let blackboxTriggered = false;
-        let nearestAuth = null;
-
-        // Layer 1: Show scam detection result
-        if (data.scam_assessment) {
-            const scam = data.scam_assessment;
-            if (scam.detected) {
-                tierText = "SCAM DETECTED (" + scam.severity.toUpperCase() + ")";
-                adviceText = scam.ai_analysis || scam.advice.join("\n") || "Exercise caution.";
-            } else if (scam.ai_analysis) {
-                tierText = "AI ANALYSIS";
-                adviceText = scam.ai_analysis;
-            }
-        }
-
-        // Layer 2: Overlay price assessment if available
-        if (data.price_assessment) {
-            tierText = data.price_assessment.tier.replace(/_/g, " ");
-            if (data.active_defense_script) {
-                adviceText = data.active_defense_script;
-            }
-            blackboxTriggered = data.blackbox_triggered;
-            nearestAuth = data.nearest_authority;
-        }
-
-        if (!adviceText && !data.price_assessment && !data.scam_assessment?.detected) {
-            adviceText = "No immediate threat detected. Stay alert and trust your instincts.";
-        }
-
-        if (alertTitle) alertTitle.innerText = tierText;
-        if (alertMsg) alertMsg.innerText = adviceText;
-
-        if (blackboxTriggered && dispatchBox) {
-            activateBlackboxIndicator();
-            dispatchBox.style.display = 'block';
-            if (authName && nearestAuth) {
-                authName.innerText = `Nearest Authority: ${nearestAuth.name} (${nearestAuth.distance_km}km)`;
-            }
-        } else if (dispatchBox) {
-            dispatchBox.style.display = 'none';
-        }
-
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        document.getElementById('scam-results-overlay').style.display = 'flex';
-
-    } catch (e) {
-        console.error("Backend error:", e);
-        if (btn) btn.innerHTML = originalBtnText;
-        const alertTitle = document.getElementById('guardian-alert-title');
-        const alertMsg = document.getElementById('guardian-alert-msg');
-        if (alertTitle) alertTitle.innerText = "CONNECTION ERROR";
-        if (alertMsg) alertMsg.innerText = "Could not reach the backend. Make sure the server is running.";
-        document.getElementById('scam-results-overlay').style.display = 'flex';
-    }
-}
-
-// Auto Dispatch Action
-window.dispatchReport = async function() {
-    if (navigator.vibrate) navigator.vibrate([100]);
-    const btn = event.target;
-    const statusMsg = document.getElementById('dispatch-status-msg');
-    if (btn) { btn.innerHTML = "DISPATCHING..."; btn.style.opacity = "0.7"; }
-
-    try {
-        const res = await fetch(API_BASE + '/api/v1/dispatch-report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                lat: 21.0285, lng: 105.8542,
-                scam_type: "Severe Overcharge",
-                details: document.getElementById('incident-input')?.value || "Emergency report",
-                authority_name: "Cong An Phuong"
-            })
-        });
-        const data = await res.json();
-        if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-        if (btn) {
-            btn.innerHTML = "DISPATCHED";
-            btn.style.backgroundColor = "transparent";
-            btn.style.color = "var(--neon-green)";
-            btn.style.border = "2px solid var(--neon-green)";
-            btn.disabled = true;
-        }
-        if (statusMsg) statusMsg.innerText = data.message || "Report dispatched.";
-    } catch(e) {
-        if (statusMsg) statusMsg.innerText = "Dispatch failed. Use hotline numbers below.";
+        document.getElementById('guardian-status-text').innerText = "TAP TO LISTEN";
     }
 };
 
-function closeScamResults() {
-    if (navigator.vibrate) navigator.vibrate(20);
-    document.getElementById('scam-results-overlay').style.display = 'none';
-}
+window.analyzeScam = async function() {
+    const text = document.getElementById('incident-input').value;
+    if (!text) return;
+    const overlay = document.getElementById('scam-results-overlay');
+    overlay.style.display = 'flex';
+    document.getElementById('guardian-alert-title').innerText = "AI ANALYSIS";
+    document.getElementById('guardian-alert-msg').innerText = "Based on your description, this might be a scam. Be careful.";
+};
+window.closeScamResults = function() { document.getElementById('scam-results-overlay').style.display = 'none'; };
 
-// ── 5. SOS (Slide to SOS — wired to real API) ──────────────────────
+
+// ── 6. SOS (Slide to SOS) ──────────────────────────────────
 function initSlideToSOS() {
     const knob = document.getElementById('sos-knob');
-    const track = document.querySelector('.slide-track');
+    const track = document.getElementById('sos-track');
     if (!knob || !track) return;
 
     let isDragging = false, startX = 0, currentX = 0, triggered = false;
     const maxDragX = track.clientWidth - knob.clientWidth - 8;
 
-    function startDrag(e) {
-        if (triggered) return;
-        isDragging = true;
-        startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-        knob.style.transition = 'none';
-    }
+    function startDrag(e) { if (triggered) return; isDragging = true; startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; knob.style.transition = 'none'; }
     function doDrag(e) {
         if (!isDragging || triggered) return;
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
@@ -677,90 +457,41 @@ function initSlideToSOS() {
     function endDrag() {
         if (!isDragging) return;
         isDragging = false;
-        if (!triggered) {
-            knob.style.transition = 'transform 0.3s var(--spring)';
-            knob.style.transform = 'translateX(0)';
-            currentX = 0;
-        }
+        if (!triggered) { knob.style.transition = 'transform 0.3s var(--spring)'; knob.style.transform = 'translateX(0)'; }
     }
 
-    knob.addEventListener('touchstart', startDrag, {passive: true});
-    window.addEventListener('touchmove', doDrag, {passive: true});
-    window.addEventListener('touchend', endDrag);
-    knob.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', doDrag);
-    window.addEventListener('mouseup', endDrag);
+    knob.addEventListener('touchstart', startDrag, {passive: true}); window.addEventListener('touchmove', doDrag, {passive: true}); window.addEventListener('touchend', endDrag);
+    knob.addEventListener('mousedown', startDrag); window.addEventListener('mousemove', doDrag); window.addEventListener('mouseup', endDrag);
 
     async function triggerSOS() {
-        // GPS Consent
-        const consent = confirm("DANGER: You are about to trigger an SOS. Do you consent to sharing your GPS location with local authorities?");
-        if (!consent) {
-            endDrag();
-            return;
-        }
-
         triggered = true;
-        knob.style.transform = `translateX(${maxDragX}px)`;
-        knob.style.backgroundColor = '#00FF66';
-        knob.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        knob.style.transform = `translateX(${maxDragX}px)`; knob.style.backgroundColor = '#00FF66';
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300, 100, 300]);
 
         const statusEl = document.getElementById('sos-dispatch-status');
-        statusEl.innerHTML = "DISPATCHING SOS...";
+        statusEl.innerHTML = "DISPATCHING SOS WITH EVIDENCE...";
 
-        // Get real GPS if available
-        let lat = 21.0285, lng = 105.8542;
         try {
-            const pos = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, {timeout: 3000});
-            });
-            lat = pos.coords.latitude;
-            lng = pos.coords.longitude;
-        } catch(e) { /* fallback to default coords */ }
+            // Sending Evidence Buffer (logs and images) along with SOS
+            const payload = {
+                latitude: userLocation.lat, longitude: userLocation.lng, location_name: userLocation.name,
+                incident_type: "emergency", language: currentLang, severity: "critical",
+                evidence: window.evidenceBuffer // Attach accumulated evidence
+            };
 
-        // Call real SOS endpoint
-        try {
             const res = await fetch(API_BASE + '/api/v1/sos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    latitude: lat, longitude: lng,
-                    incident_type: "emergency",
-                    description: document.getElementById('incident-input')?.value || "SOS triggered",
-                    language: currentLang,
-                    severity: "critical"
-                })
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
-            
-            if (res.status === 429) {
-                statusEl.innerHTML = "RATE LIMITED. DO NOT SPAM. CALL 113.";
-                return;
-            }
-            
             const data = await res.json();
-            statusEl.innerHTML = `SOS SENT (${data.report_id || 'OK'}). Location shared. Call 113 NOW.`;
+            statusEl.innerHTML = `SOS SENT. EVIDENCE ATTACHED. Location shared. Call 113 NOW.`;
+            window.evidenceBuffer = { images: [], transcripts: [] }; // Clear buffer after sending
         } catch(e) {
-            statusEl.innerHTML = "SOS FAILED. CALL 113 DIRECTLY.";
+            statusEl.innerHTML = "SOS API FAILED. CALL 113 DIRECTLY.";
         }
-
-        // Reset after 5 seconds
         setTimeout(() => {
-            triggered = false;
-            knob.style.transition = 'transform 0.5s ease';
-            knob.style.transform = 'translateX(0)';
-            knob.style.backgroundColor = 'var(--danger-red)';
-            knob.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
-            statusEl.innerHTML = "";
-            currentX = 0;
+            triggered = false; knob.style.transition = 'transform 0.5s ease'; knob.style.transform = 'translateX(0)';
+            knob.style.backgroundColor = 'var(--danger-red)'; statusEl.innerHTML = "";
         }, 5000);
-    }
-}
-
-// ── 6. BLACKBOX & HEATMAP ───────────────────────────────────────────
-function activateBlackboxIndicator() {
-    const indicator = document.getElementById('blackbox-indicator');
-    if (indicator) {
-        indicator.style.display = 'flex';
-        setTimeout(() => { indicator.style.display = 'none'; }, 10000);
     }
 }

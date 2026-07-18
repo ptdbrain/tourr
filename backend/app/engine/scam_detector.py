@@ -267,7 +267,7 @@ Important rules:
 - Keep response UNDER 40 WORDS. Be extremely concise. Use bullet points.
 - Respond entirely in {target_lang}"""
 
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(
             prompt,
             generation_config=genai.GenerationConfig(

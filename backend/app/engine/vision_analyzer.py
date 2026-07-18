@@ -28,8 +28,8 @@ async def analyze_menu_layout(image_base64: str, mime_type: str = "image/jpeg", 
     # Real implementation
     try:
         genai.configure(api_key=settings.gemini_key)
-        # Gemini 1.5 Flash supports both vision and structured outputs
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        # Gemini 2.5 Flash supports both vision and structured outputs
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         prompt = """You are an expert fraud investigator in Vietnam specializing in tourist traps.
 Analyze the provided image of a restaurant menu, receipt, or POS credit card terminal.

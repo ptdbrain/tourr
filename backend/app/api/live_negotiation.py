@@ -64,11 +64,18 @@ async def process_live_message(req: LiveMessageRequest):
         "timestamp": datetime.datetime.utcnow().isoformat()
     })
 
+    import re
+    combined_text = (safe_text + " " + translated_text).lower()
+    is_price_discussion = bool(re.search(r'\d+|price|cost|money|vnd|dong|bao nhiêu|tiền|giá|đắt', combined_text))
+    is_suspicious = bool(re.search(r'police|fake|scam|lừa|cảnh sát|bắt|đóng cửa|không mua|ép|đánh|chết', combined_text))
+
     return {
         "status": "success",
         "original": safe_text,
         "translated": translated_text,
-        "romanization": translation_result.get("romanization", "")
+        "romanization": translation_result.get("romanization", ""),
+        "is_price_discussion": is_price_discussion,
+        "is_suspicious": is_suspicious
     }
 
 @router.post("/api/v1/live/conclude")
