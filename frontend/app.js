@@ -15,12 +15,39 @@ window.evidenceBuffer = {
 let userLocation = { lat: 21.0285, lng: 105.8542, name: "Unknown Location" };
 let cameraStream = null;
 
+// Handle language selection on homepage
+window.changeLanguage = function(lang) {
+    currentLang = lang;
+    localStorage.setItem('tour_resq_lang', lang);
+    document.documentElement.setAttribute('data-lang', lang);
+    updateLanguageUI(lang);
+    loadTranslations(lang);
+    
+    // Update active state on buttons
+    document.querySelectorAll('.btn-lang').forEach(btn => {
+        if(btn.getAttribute('data-lang') === lang) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    if (navigator.vibrate) try { navigator.vibrate(20); } catch(e){}
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     initSlideToSOS();
     updateLanguageUI(currentLang);
     loadTranslations(currentLang);
     initGlobalMap();
     initRippleEffect();
+    
+    // Highlight initial language button
+    document.querySelectorAll('.btn-lang').forEach(btn => {
+        if(btn.getAttribute('data-lang') === currentLang) {
+            btn.classList.add('active');
+        }
+    });
 });
 
 // ── 0.1 GLOBAL MAP (LEAFLET) ──────────────────────────────────

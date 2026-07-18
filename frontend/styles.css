@@ -99,13 +99,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 .hero-content h1 { font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem; }
 .hero-content p { color: var(--text-secondary); font-size: 1.1rem; }
 
-.btn-explore {
-    background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.2); color: white;
-    padding: 1rem 2rem; border-radius: 100px; font-family: var(--font-display); font-weight: 600; font-size: 1.1rem;
-    display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s;
-}
-.btn-explore:active { transform: scale(0.95); background: white; color: black; }
+.btn-explore { width: 100%; padding: 1.25rem; border-radius: 100px; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; background: var(--neon-green); color: black; border: none; display: flex; justify-content: center; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s; box-shadow: 0 10px 30px rgba(0, 255, 102, 0.2); }
+.btn-explore:active { transform: scale(0.98); }
+
+.btn-lang { padding: 1rem; border-radius: 16px; font-family: var(--font-display); font-weight: 600; font-size: 1rem; background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s var(--spring); }
+.btn-lang.active { background: rgba(0,255,102,0.15); color: var(--neon-green); border-color: var(--neon-green); transform: translateY(-2px); }
+.btn-lang:active { transform: scale(0.95); }
+
 .privacy-note { font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-top: 1rem; }
 
 /* ── LOCATION REVEAL ─────────────────────────────────────── */

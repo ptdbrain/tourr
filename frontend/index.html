@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="https://unpkg.com/feather-icons"></script>
-    <link rel="stylesheet" href="styles.css?v=18">
+    <link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body class="dark-theme">
     <div id="global-map-bg" class="global-map-bg"></div>
@@ -36,9 +36,19 @@
                 <p class="tagline" data-i18n="app.tagline">Discover Vietnam Safely.</p>
             </div>
             
-            <div class="hero-actions">
-                <button id="btn-start-perms" class="btn-explore" onclick="startJourney()">
-                    <span>EXPLORE NOW</span> <i data-feather="arrow-right"></i>
+            <div class="hero-actions" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+                <div class="language-selector" style="width: 100%;">
+                    <p class="tracking-widest" style="font-size: 0.75rem; margin-bottom: 1rem; color: var(--text-secondary); text-align: center;" data-i18n="lang.select">SELECT LANGUAGE</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button class="btn-lang" onclick="changeLanguage('en')" data-lang="en">🇺🇸 English</button>
+                        <button class="btn-lang" onclick="changeLanguage('ko')" data-lang="ko">🇰🇷 한국어</button>
+                        <button class="btn-lang" onclick="changeLanguage('zh')" data-lang="zh">🇨🇳 中文</button>
+                        <button class="btn-lang" onclick="changeLanguage('ru')" data-lang="ru">🇷🇺 Русский</button>
+                    </div>
+                </div>
+                
+                <button id="btn-start-perms" class="btn-explore mt-md" onclick="startJourney()" style="width: 100%;">
+                    <span data-i18n="app.welcome">EXPLORE NOW</span> <i data-feather="arrow-right"></i>
                 </button>
                 <p class="privacy-note">Encrypted & Privacy-First</p>
             </div>
@@ -267,6 +277,6 @@
         </nav>
     </main>
     <script>feather.replace();</script>
-    <script src="app.js?v=18"></script>
+    <script src="app.js?v=19"></script>
 </body>
 </html>
