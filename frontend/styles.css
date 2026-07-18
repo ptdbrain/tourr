@@ -160,9 +160,9 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 .nav-item.danger.active { background: rgba(239,68,68,0.2); color: var(--danger-red); }
 
 /* ── SCANNER ─────────────────────────────────────────────── */
-.camera-layer { position: absolute; inset: 0; z-index: 1; }
+.camera-layer { position: fixed; inset: 0; z-index: 1; }
 .mock-camera-bg { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
-.camera-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.camera-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; pointer-events: none; }
 .modern-focus { width: 75%; height: 50%; position: relative; border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); }
 .corner { position: absolute; width: 20px; height: 20px; border-color: var(--neon-green); border-style: solid; }
 .t-l { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 16px 0 0 0; }
@@ -173,7 +173,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 @keyframes laser { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
 .glass-header { position: absolute; top: 0; left: 0; width: 100%; padding: 2rem 1.5rem; z-index: 2; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-.glass-controls { position: absolute; bottom: 120px; left: 0; width: 100%; z-index: 2; display: flex; gap: 1rem; padding: 0 1.5rem; }
+.glass-controls { position: fixed; bottom: 90px; left: 0; width: 100%; z-index: 100; display: flex; gap: 1rem; padding: 0 1.5rem; }
 
 .btn-giant-action { flex: 1; height: 64px; border-radius: 20px; border: none; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s; }
 .btn-neon-green { background: var(--neon-green); color: black; }
@@ -236,15 +236,43 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 .pulse-red { color: var(--danger-red); animation: pulse 1.5s infinite; margin-bottom: 0.5rem; }
 .mt-sm { margin-top: 0.5rem; }
 
-/* ── GUARDIAN CHAT ───────────────────────────────────────── */
+/* ── GUARDIAN & CHAT & BUTTONS ────────────────────────────── */
 #tab-guardian { display: flex; flex-direction: column; padding: 0; }
 .chat-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.chat-box { flex: 1; padding: 1.5rem; overflow-y: auto; }
+.chat-box { flex: 1; padding: 1.5rem; overflow-y: auto; padding-bottom: 150px; }
 .chat-msg { max-width: 85%; padding: 1rem; border-radius: 20px; margin-bottom: 1rem; font-size: 0.95rem; line-height: 1.5; }
 .ai-msg { background: rgba(255,255,255,0.05); border-radius: 20px 20px 20px 4px; }
 .user-msg { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px 20px 4px 20px; margin-left: auto; }
-.chat-input-area { padding: 1rem; margin: 1rem; border-radius: 100px; display: flex; align-items: center; gap: 10px; }
+
+.chat-input-area { 
+    position: fixed; bottom: 90px; left: 1.5rem; right: 1.5rem; 
+    padding: 1rem; border-radius: 100px; 
+    display: flex; align-items: center; justify-content: center; gap: 10px; 
+    z-index: 100;
+}
 .chat-input-area input { flex: 1; background: transparent; border: none; color: white; font-family: var(--font-body); font-size: 1rem; outline: none; }
+
+.btn-giant-mic {
+    width: 50px; height: 50px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.1); color: white;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: bold; cursor: pointer; transition: 0.2s;
+}
+.btn-giant-mic small { font-size: 0.6rem; opacity: 0.8; margin-top: 2px; }
+
+.btn-secondary-giant {
+    width: 100%; height: 60px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05); color: white;
+    font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+}
+
+.btn-giant-close {
+    width: 100%; height: 60px; border-radius: 20px; border: none;
+    background: rgba(239, 68, 68, 0.2); color: var(--danger-red);
+    font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+}
 
 /* Scrollbar */
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
