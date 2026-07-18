@@ -302,9 +302,9 @@ async function processBase64ImageAndAnalyze(base64Image) {
     overlay.style.display = 'flex';
 
     try {
-        const res = await fetch(API_BASE + '/api/v1/check-price-ocr', {
+        const res = await fetch(`${API_BASE}/api/v1/check-price-ocr`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 image_base64: base64Image,
                 language: currentLang,
