@@ -333,8 +333,24 @@ async function processBase64ImageAndAnalyze(base64Image) {
                     </div>
                 </div>`;
             });
-            breakdown.innerHTML = bHtml;
-            
+            let advice = "";
+            if (r.overall_verdict === 'overpriced') {
+                advice = `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger-red); padding: 10px; border-radius: 10px; margin-top: 15px; color: white;">
+                    <strong style="color: var(--danger-red);">💡 ${t('scan.advice_title', 'Action Required:')}</strong><br/>
+                    <span style="font-size: 0.9rem;">${t('scan.advice_overpriced', 'You are being severely overcharged. Do NOT pay the asked price. Show them the normal price or threaten to call the Tourist Police (113).')}</span>
+                </div>`;
+            } else if (r.overall_verdict === 'slightly_high') {
+                advice = `<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #F59E0B; padding: 10px; border-radius: 10px; margin-top: 15px; color: white;">
+                    <strong style="color: #F59E0B;">💡 ${t('scan.advice_title', 'Action Required:')}</strong><br/>
+                    <span style="font-size: 0.9rem;">${t('scan.advice_slightly_high', 'This is a tourist premium price. Try to negotiate down by 20-30%.')}</span>
+                </div>`;
+            } else {
+                advice = `<div style="background: rgba(57, 255, 20, 0.1); border: 1px solid var(--neon-green); padding: 10px; border-radius: 10px; margin-top: 15px; color: white;">
+                    <strong style="color: var(--neon-green);">✅ ${t('scan.advice_fair', 'Safe to Pay:')}</strong><br/>
+                    <span style="font-size: 0.9rem;">${t('scan.advice_fair_desc', 'This matches the local price. You can pay with confidence.')}</span>
+                </div>`;
+            }
+            breakdown.innerHTML = bHtml + advice;
             if (r.overall_verdict === 'overpriced') {
                 scanTitle.innerText = t('scan.overpriced', "OVERPRICED");
                 scanTitle.parentElement.classList.remove('tier-caution', 'tier-fair');
