@@ -339,7 +339,7 @@ async function processBase64ImageAndAnalyze(base64Image) {
                 </div>`;
             });
             let advice = "";
-            if (r.overall_verdict === 'overpriced') {
+            if (r.overall_verdict === 'overpriced' || r.overall_verdict === 'mixed') {
                 advice = `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger-red); padding: 10px; border-radius: 10px; margin-top: 15px; color: white;">
                     <strong style="color: var(--danger-red);">💡 ${t('scan.advice_title', 'Action Required:')}</strong><br/>
                     <span style="font-size: 0.9rem;">${t('scan.advice_overpriced', 'You are being severely overcharged. Do NOT pay the asked price. Show them the normal price or threaten to call the Tourist Police (113).')}</span>
@@ -349,6 +349,11 @@ async function processBase64ImageAndAnalyze(base64Image) {
                     <strong style="color: #F59E0B;">💡 ${t('scan.advice_title', 'Action Required:')}</strong><br/>
                     <span style="font-size: 0.9rem;">${t('scan.advice_slightly_high', 'This is a tourist premium price. Try to negotiate down by 20-30%.')}</span>
                 </div>`;
+            } else if (r.overall_verdict === 'insufficient_data') {
+                advice = `<div style="background: rgba(100, 116, 139, 0.1); border: 1px solid #64748B; padding: 10px; border-radius: 10px; margin-top: 15px; color: white;">
+                    <strong style="color: #94A3B8;">ℹ️ ${t('scan.advice_unknown', 'Unknown Price:')}</strong><br/>
+                    <span style="font-size: 0.9rem;">${t('scan.advice_unknown_desc', 'Not enough data in this region to verify the price. Please use your best judgment.')}</span>
+                </div>`;
             } else {
                 advice = `<div style="background: rgba(57, 255, 20, 0.1); border: 1px solid var(--neon-green); padding: 10px; border-radius: 10px; margin-top: 15px; color: white;">
                     <strong style="color: var(--neon-green);">✅ ${t('scan.advice_fair', 'Safe to Pay:')}</strong><br/>
@@ -356,23 +361,29 @@ async function processBase64ImageAndAnalyze(base64Image) {
                 </div>`;
             }
             breakdown.innerHTML = bHtml + advice;
-            if (r.overall_verdict === 'overpriced') {
+            if (r.overall_verdict === 'overpriced' || r.overall_verdict === 'mixed') {
                 scanTitle.innerText = t('scan.overpriced', "OVERPRICED");
-                scanTitle.parentElement.classList.remove('tier-caution', 'tier-fair');
+                scanTitle.parentElement.classList.remove('tier-caution', 'tier-fair', 'tier-unknown');
                 scanTitle.parentElement.classList.add('tier-danger');
                 document.getElementById('btn-contribute').style.display = 'none';
                 document.getElementById('btn-retry').style.display = 'none';
                 if (navigator.vibrate) try { navigator.vibrate([100, 50, 100, 50, 200]); } catch(e){}
             } else if (r.overall_verdict === 'slightly_high') {
                 scanTitle.innerText = t('scan.slightly_high', "SLIGHTLY HIGH");
-                scanTitle.parentElement.classList.remove('tier-danger', 'tier-fair');
+                scanTitle.parentElement.classList.remove('tier-danger', 'tier-fair', 'tier-unknown');
                 scanTitle.parentElement.classList.add('tier-caution');
                 document.getElementById('btn-contribute').style.display = 'none';
                 document.getElementById('btn-retry').style.display = 'none';
                 if (navigator.vibrate) try { navigator.vibrate([100, 50, 100]); } catch(e){}
+            } else if (r.overall_verdict === 'insufficient_data') {
+                scanTitle.innerText = t('scan.unknown', "UNKNOWN");
+                scanTitle.parentElement.classList.remove('tier-danger', 'tier-fair', 'tier-caution');
+                scanTitle.parentElement.classList.add('tier-unknown');
+                document.getElementById('btn-contribute').style.display = 'none';
+                document.getElementById('btn-retry').style.display = 'block';
             } else {
                 scanTitle.innerText = t('scan.fair', "FAIR PRICE");
-                scanTitle.parentElement.classList.remove('tier-caution', 'tier-danger');
+                scanTitle.parentElement.classList.remove('tier-caution', 'tier-danger', 'tier-unknown');
                 scanTitle.parentElement.classList.add('tier-fair');
                 document.getElementById('btn-contribute').style.display = 'block';
                 document.getElementById('btn-retry').style.display = 'none';
