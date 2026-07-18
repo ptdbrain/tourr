@@ -23,32 +23,20 @@
             SOS
         </button>
 
-        <!-- 0. ONBOARDING & PERMISSIONS -->
-        <section id="tab-permissions" class="tab-content active">
-            <div class="home-logo">
+        <!-- TAB 0: HOME (SPLASH) -->
+        <section id="tab-home" class="tab-content active">
+            <div class="hero-content">
                 <img src="logo.png" alt="Tour-resQ Logo" class="app-logo">
                 <h1 id="home-title" data-i18n="app.name">Tour-resQ</h1>
-                <p data-i18n="app.tagline">Your smart local guide & travel companion</p>
+                <p class="tagline" data-i18n="app.tagline">Discover Vietnam Safely & Like a Local</p>
             </div>
             
-            <div class="status-badges">
-                <div class="badge" id="badge-cam">
-                    <span class="icon">📸</span>
-                    <span class="text">Camera</span>
-                </div>
-                <div class="badge" id="badge-mic">
-                    <span class="icon">🎙️</span>
-                    <span class="text">Mic</span>
-                </div>
-                <div class="badge" id="badge-gps">
-                    <span class="icon">📍</span>
-                    <span class="text">Location</span>
-                </div>
+            <div class="hero-actions">
+                <button id="btn-start-perms" class="btn-explore" onclick="startJourney()">
+                    EXPLORE NOW <span class="arrow">→</span>
+                </button>
+                <p class="privacy-note">We only request location to personalize your guide</p>
             </div>
-            
-            <button id="btn-start-perms" class="btn-start-journey" onclick="startJourney()">
-                GRANT ACCESS & START
-            </button>
         </section>
 
         <!-- 1. LOCATION REVEAL -->

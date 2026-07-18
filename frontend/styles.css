@@ -82,23 +82,37 @@ body.dark-theme {
 }
 .tab-content.active { display: block; opacity: 1; transform: translateY(0); }
 
-/* ── 2.1 HOMEPAGE (SPLASH) ────────────────────────── */
-#tab-permissions {
-    display: flex; flex-direction: column; justify-content: center; align-items: center; padding: var(--space-xl);
-    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%230A0C12"/><circle cx="20" cy="30" r="50" fill="%2310B981" opacity="0.15" filter="blur(20px)"><animate attributeName="cx" values="20;80;20" dur="10s" repeatCount="indefinite"/></circle><circle cx="80" cy="70" r="60" fill="%233B82F6" opacity="0.15" filter="blur(20px)"><animate attributeName="cx" values="80;20;80" dur="12s" repeatCount="indefinite"/></circle></svg>') no-repeat center center / cover;
+/* ── 2.1 HOMEPAGE (SPLASH - STUNNING TRAVEL HERO) ────────────────────────── */
+#tab-home {
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: var(--space-2xl) var(--space-xl);
+    background: linear-gradient(to bottom, rgba(10,12,18,0.2) 0%, rgba(10,12,18,0.9) 100%), url('https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop') no-repeat center center / cover;
     z-index: 500;
+    position: relative;
 }
-.home-logo { margin-bottom: var(--space-xl); text-align: center; }
+.hero-content { margin-top: 10vh; text-align: center; display: flex; flex-direction: column; align-items: center; animation: popIn 1s var(--spring); }
 .app-logo {
-    width: 120px; height: auto; margin-bottom: var(--space-md); 
-    border-radius: 28px; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+    width: 100px; height: auto; margin-bottom: var(--space-md); 
+    border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
 }
-.home-logo h1 { 
+.hero-content h1 { 
     font-family: 'Plus Jakarta Sans', sans-serif; font-size: var(--font-3xl); font-weight: 800; 
-    background: linear-gradient(135deg, #FFF, #A0A5B5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-    letter-spacing: -1px; 
+    color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    letter-spacing: -1px; margin-bottom: 5px;
 }
-.home-logo p { font-size: var(--font-base); color: var(--text-secondary); margin-top: var(--space-sm); }
+.hero-content .tagline { font-size: var(--font-lg); color: rgba(255,255,255,0.9); font-weight: 500; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+
+.hero-actions { width: 100%; max-width: 350px; text-align: center; animation: popIn 1s 0.2s var(--spring) both; }
+.btn-explore {
+    width: 100%; padding: var(--space-lg); background: white; color: black;
+    border: none; border-radius: 20px; font-family: var(--font-stack); font-size: var(--font-lg); font-weight: 800; letter-spacing: 1px;
+    box-shadow: 0 15px 30px rgba(255,255,255,0.2); cursor: pointer; transition: transform 0.3s var(--spring), box-shadow 0.3s;
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+}
+.btn-explore:active { transform: scale(0.95); }
+.btn-explore .arrow { transition: transform 0.3s; }
+.btn-explore:hover .arrow { transform: translateX(5px); }
+.privacy-note { font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: var(--space-md); text-transform: uppercase; letter-spacing: 1px; }
 
 .lang-instruction {
     color: var(--text-secondary); margin-bottom: var(--space-md); 
@@ -349,27 +363,7 @@ body.dark-theme {
 .global-sos-btn.hidden { display: none; }
 .global-sos-btn:active { transform: scale(0.9); }
 
-/* Cinematic Onboarding Badges */
-.status-badges {
-    display: flex; gap: var(--space-md); margin-bottom: var(--space-xl);
-    width: 100%; max-width: 350px; justify-content: center;
-}
-.badge {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px; padding: var(--space-md) var(--space-sm);
-    color: var(--text-secondary); transition: all 0.4s var(--spring);
-    backdrop-filter: blur(10px);
-}
-.badge .icon { font-size: var(--font-xl); margin-bottom: var(--space-xs); filter: grayscale(100%) opacity(0.5); transition: 0.4s; }
-.badge .text { font-size: var(--font-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-
-/* Granted State */
-.badge.granted {
-    background: rgba(16, 185, 129, 0.1); border-color: var(--neon-green);
-    color: white; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
-}
-.badge.granted .icon { filter: none; text-shadow: 0 0 15px var(--neon-green); }
+/* Replaced Badge styles */
 
 .location-reveal-card {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
