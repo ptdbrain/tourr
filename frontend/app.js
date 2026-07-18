@@ -246,7 +246,8 @@ window.captureAndAnalyze = async function() {
             // Build Breakdown HTML
             let bHtml = "<strong>Item Breakdown:</strong><br/>";
             r.items_checked.forEach(item => {
-                bHtml += `- ${item.item_name}: ${item.unit_price.toLocaleString()} VND <em>(${item.tier.toUpperCase()})</em><br/>`;
+                const tier = item.db_tier || 'unknown';
+                bHtml += `- ${item.item_name}: ${item.unit_price.toLocaleString()} VND <em>(${tier.toUpperCase()})</em><br/>`;
             });
             breakdown.innerHTML = bHtml;
 
