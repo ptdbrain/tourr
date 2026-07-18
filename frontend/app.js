@@ -93,16 +93,25 @@ function handlePricePhoto(event) {
                     if (r.overall_verdict === 'overpriced') {
                         scanTitle.innerText = "OVERPRICED";
                         scanTitle.parentElement.className = "results-card high-contrast tier-danger";
+                        document.getElementById('btn-contribute').style.display = 'none';
                     } else if (r.overall_verdict === 'slightly_high') {
                         scanTitle.innerText = "SLIGHTLY HIGH";
                         scanTitle.parentElement.className = "results-card high-contrast tier-caution";
+                        document.getElementById('btn-contribute').style.display = 'none';
                     } else if (r.overall_verdict === 'mixed') {
                         scanTitle.innerText = "MIXED PRICES";
                         scanTitle.parentElement.className = "results-card high-contrast tier-caution";
+                        document.getElementById('btn-contribute').style.display = 'none';
                     } else {
                         scanTitle.innerText = "FAIR PRICE";
                         scanTitle.parentElement.className = "results-card high-contrast tier-fair";
+                        document.getElementById('btn-contribute').style.display = 'block';
+                        document.getElementById('btn-contribute').innerHTML = "YES, I PAID THIS (CONTRIBUTE)";
+                        document.getElementById('btn-contribute').disabled = false;
+                        document.getElementById('btn-contribute').style.background = "var(--neon-green)";
                     }
+                    
+                    window.lastScannedItems = r.items_checked;
                     
                     scanPrice.innerText = r.total_asked.toLocaleString() + " VND";
                     scanMsg.innerText = r.summary;
@@ -132,6 +141,54 @@ function closePriceResults() {
     document.getElementById('price-results-overlay').style.display = 'none';
     const visionWarningBox = document.getElementById('vision-forgery-warning');
     if (visionWarningBox) visionWarningBox.style.display = 'none';
+}
+
+async function contributePrice() {
+    if (!window.lastScannedItems || window.lastScannedItems.length === 0) return;
+    
+    let deviceId = localStorage.getItem('tour_resq_device_id');
+    if (!deviceId) {
+        deviceId = 'device_' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('tour_resq_device_id', deviceId);
+    }
+    
+    const btn = document.getElementById('btn-contribute');
+    btn.innerHTML = "CONTRIBUTING...";
+    btn.disabled = true;
+    
+    try {
+        let successCount = 0;
+        for (const item of window.lastScannedItems) {
+            const res = await fetch(API_BASE + '/api/v1/contribute-price', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    region: "hanoi", // Using Hanoi for demo scope
+                    category: "food",
+                    item_name: item.item_name,
+                    item_name_vi: item.item_name_vi,
+                    price_vnd: Math.round(item.unit_price),
+                    venue_type: "street",
+                    device_id: deviceId
+                })
+            });
+            if (res.status === 200) successCount++;
+        }
+        
+        if (successCount > 0) {
+            btn.innerHTML = "SUCCESS! THANK YOU";
+            btn.style.background = "var(--neon-yellow)";
+        } else {
+            btn.innerHTML = "RATE LIMITED TODAY";
+            btn.style.background = "var(--danger-red)";
+        }
+        
+        setTimeout(() => { closePriceResults(); }, 1500);
+    } catch(e) {
+        console.error(e);
+        btn.innerHTML = "ERROR";
+        btn.disabled = false;
+    }
 }
 
 // ── 3. TRANSLATE (Split-Screen with real Speech + API) ──────────────
