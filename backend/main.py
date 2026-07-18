@@ -32,20 +32,22 @@ from app.i18n.translations import get_supported_languages
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    # Startup
     logger.info(f"🛡️ {settings.APP_NAME} v{settings.APP_VERSION} starting...")
     logger.info(f"   Languages: {', '.join(settings.SUPPORTED_LANGUAGES)}")
     logger.info(f"   Gemini API: {'✅ configured' if settings.gemini_key else '❌ missing'}")
-
-    # Initialize price database
-    from app.data.price_db import init_price_db
-    init_price_db()
-    logger.info("   Price DB: ✅ initialized")
 
     yield
 
     # Shutdown
     logger.info(f"🛡️ {settings.APP_NAME} shutting down...")
+
+# Initialize price database (Global scope for Vercel Serverless compatibility)
+try:
+    from app.data.price_db import init_price_db
+    init_price_db()
+    logger.info("   Price DB: ✅ initialized")
+except Exception as e:
+    logger.error(f"Failed to init DB: {e}")
 
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
