@@ -295,6 +295,7 @@ class OCRPriceCheckResult(BaseModel):
     overall_verdict: str  # fair, slightly_high, overpriced, mixed, insufficient_data
     currency_warning: str  # Empty or warning about wrong currency
     summary: str
+    requires_human_confirmation: bool = Field(default=False, description="True if OCR results need human verification to prevent false alarms")
 
 
 async def check_price_from_image(
@@ -410,6 +411,10 @@ Return a structured list of all items found."""
         else:
             overall = worst_tier
 
+        # Human-in-the-loop: Require confirmation if any item is overpriced, 
+        # or if there's a currency warning, to prevent false alarms from OCR errors
+        requires_human_confirmation = (n_overpriced > 0) or bool(currency_warning) or (n_insufficient > 0)
+
         return OCRPriceCheckResult(
             items_checked=items_checked,
             total_asked=total_asked,
@@ -417,6 +422,7 @@ Return a structured list of all items found."""
             overall_verdict=overall,
             currency_warning=currency_warning,
             summary=summary,
+            requires_human_confirmation=requires_human_confirmation,
         )
 
     except Exception as e:

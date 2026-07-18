@@ -84,7 +84,10 @@ if os.path.exists(frontend_path):
 
 # ── Register API routes ──────────────────────────────────
 from app.api.routes import router as api_router
+from app.api.live_negotiation import router as live_router
+
 app.include_router(api_router, prefix="/api")
+app.include_router(live_router)
 
 
 # ── Root endpoint ────────────────────────────────────────

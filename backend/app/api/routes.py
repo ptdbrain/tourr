@@ -302,9 +302,11 @@ class ContributePriceRequest(BaseModel):
     price_vnd: int
     venue_type: str = "street"
     item_name_vi: str = ""
+    device_id: str = "unknown"
 
 @router.post("/api/v1/contribute-price")
-async def contribute_price(req: ContributePriceRequest):
+@limiter.limit("5/day")
+async def contribute_price(req: ContributePriceRequest, request: Request):
     """
     Submit a tourist-verified fair price to strengthen the database.
     Only accepted if the price falls within the fair range (prevents poisoning).
@@ -318,14 +320,22 @@ async def contribute_price(req: ContributePriceRequest):
             "existing_range": existing.price_range,
         }
 
-    add_verified_price(
+    success = add_verified_price(
         region=req.region,
         category=req.category,
         item_name=req.item_name,
         price_vnd=req.price_vnd,
         venue_type=req.venue_type,
         item_name_vi=req.item_name_vi,
+        device_id=req.device_id,
     )
+    
+    if not success:
+        return {
+            "status": "rejected",
+            "message": "Rate limit exceeded: You have already contributed to this item today.",
+        }
+
     return {
         "status": "accepted",
         "message": f"Price for {req.item_name} ({req.price_vnd:,} VND) added to database. Thank you!",

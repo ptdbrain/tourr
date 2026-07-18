@@ -241,13 +241,16 @@ async def detect_scam_with_ai(
 
         genai.configure(api_key=settings.gemini_key)
 
+        from app.engine.privacy_scrubber import scrub_pii
+        safe_description = scrub_pii(description)
+
         lang_names = {"en": "English", "ko": "Korean", "zh": "Chinese", "ru": "Russian"}
         target_lang = lang_names.get(lang, "English")
 
         prompt = f"""You are a tourist safety AI assistant in Vietnam.
 
 A tourist described this situation:
-"{description}"
+"{safe_description}"
 
 Location: {region}, Vietnam
 
@@ -261,11 +264,17 @@ Important rules:
 - Give SPECIFIC, ACTIONABLE advice for Vietnam
 - Include relevant phone numbers (Police: 113, Tourism hotline: 1900-6068)
 - Do NOT accuse anyone directly — use phrases like "this situation resembles..."
-- Keep response under 200 words
+- Keep response UNDER 40 WORDS. Be extremely concise. Use bullet points.
 - Respond entirely in {target_lang}"""
 
         model = genai.GenerativeModel("gemini-2.0-flash")
-        response = model.generate_content(prompt)
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                max_output_tokens=100,
+                temperature=0.2
+            )
+        )
 
         if response and response.text:
             result.ai_analysis = response.text.strip()

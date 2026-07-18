@@ -137,6 +137,58 @@ let touristMicActive = false;
 let vendorRecognition = null;
 let touristRecognition = null;
 
+let liveSessionId = null;
+
+async function ensureLiveSession() {
+    if (!liveSessionId) {
+        try {
+            const res = await fetch(API_BASE + '/api/v1/live/start', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                liveSessionId = data.session_id;
+                document.getElementById('btn-conclude-negotiation').style.display = 'block';
+            }
+        } catch(e) { console.error("Could not start session:", e); }
+    }
+}
+
+async function concludeNegotiation() {
+    if (!liveSessionId) return;
+    
+    if (navigator.vibrate) navigator.vibrate([30, 30]);
+    const btn = document.getElementById('btn-conclude-negotiation');
+    btn.innerHTML = "ANALYZING...";
+    
+    try {
+        const res = await fetch(API_BASE + '/api/v1/live/conclude', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: liveSessionId, tourist_lang: currentLang })
+        });
+        const data = await res.json();
+        btn.innerHTML = "EVALUATE SCAM";
+        
+        if (data.status === 'success') {
+            document.getElementById('nego-alert-title').innerText = "SCAM ANALYSIS";
+            // Convert newlines to HTML br
+            document.getElementById('nego-alert-msg').innerHTML = data.final_verdict.replace(/\n/g, "<br>");
+            document.getElementById('negotiation-results-overlay').style.display = 'flex';
+            liveSessionId = null; // Reset session
+            btn.style.display = 'none';
+        } else {
+            alert("Analysis failed: " + data.message);
+        }
+    } catch(e) {
+        console.error(e);
+        btn.innerHTML = "EVALUATE SCAM";
+        alert("Network error.");
+    }
+}
+
+function closeNegotiationResults() {
+    document.getElementById('negotiation-results-overlay').style.display = 'none';
+}
+
 if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -147,16 +199,23 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     vendorRecognition.onresult = async function(ev) {
         const text = ev.results[0][0].transcript;
         document.getElementById('vendor-text').textContent = text;
-        // Translate Vietnamese -> Tourist's language
+        // Translate Vietnamese -> Tourist's language via Live Negotiation
+        await ensureLiveSession();
         try {
-            const res = await fetch(API_BASE + '/api/v1/translate', {
+            const res = await fetch(API_BASE + '/api/v1/live/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, source_lang: 'vi', target_lang: currentLang, context: 'negotiation' })
+                body: JSON.stringify({ 
+                    session_id: liveSessionId,
+                    text, 
+                    source_lang: 'vi', 
+                    target_lang: currentLang, 
+                    speaker: 'vendor' 
+                })
             });
             const data = await res.json();
-            if (data.translation) {
-                document.getElementById('tourist-text').textContent = data.translation;
+            if (data.translated) {
+                document.getElementById('tourist-text').textContent = data.translated;
             }
         } catch(e) { console.error("Translate error:", e); }
         toggleVendorMic();
@@ -170,16 +229,23 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     touristRecognition.onresult = async function(ev) {
         const text = ev.results[0][0].transcript;
         document.getElementById('tourist-text').textContent = text;
-        // Translate Tourist's language -> Vietnamese
+        // Translate Tourist's language -> Vietnamese via Live Negotiation
+        await ensureLiveSession();
         try {
-            const res = await fetch(API_BASE + '/api/v1/translate', {
+            const res = await fetch(API_BASE + '/api/v1/live/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, source_lang: currentLang, target_lang: 'vi', context: 'negotiation' })
+                body: JSON.stringify({ 
+                    session_id: liveSessionId,
+                    text, 
+                    source_lang: currentLang, 
+                    target_lang: 'vi', 
+                    speaker: 'tourist' 
+                })
             });
             const data = await res.json();
-            if (data.translation) {
-                document.getElementById('vendor-text').textContent = data.translation;
+            if (data.translated) {
+                document.getElementById('vendor-text').textContent = data.translated;
             }
         } catch(e) { console.error("Translate error:", e); }
         toggleTouristMic();

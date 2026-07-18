@@ -112,11 +112,14 @@ async def translate_text(
 
         ctx = context_instructions.get(context, context_instructions["tourist"])
 
+        from app.engine.privacy_scrubber import scrub_pii
+        safe_text = scrub_pii(text)
+
         prompt = f"""Translate the following from {src} to {tgt}.
 
 Context: {ctx}
 
-Text: "{text}"
+Text: "{safe_text}"
 
 Respond in this exact JSON format (no markdown):
 {{
@@ -127,7 +130,13 @@ Respond in this exact JSON format (no markdown):
 }}"""
 
         model = genai.GenerativeModel("gemini-2.0-flash")
-        response = model.generate_content(prompt)
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                max_output_tokens=150,
+                temperature=0.3
+            )
+        )
 
         if response and response.text:
             import json

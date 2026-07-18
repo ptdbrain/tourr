@@ -102,6 +102,19 @@
                         <span></span><span></span><span></span><span></span><span></span>
                     </div>
                 </div>
+
+                <!-- Conclude Button (Middle) -->
+                <button id="btn-conclude-negotiation" class="btn-secondary-giant" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:10; background:var(--neon-green); color:black; padding: 0.5rem 1rem; border-radius:2rem; display:none;" onclick="concludeNegotiation()">EVALUATE SCAM</button>
+
+            </div>
+            
+            <!-- Overlay for Negotiation Results -->
+            <div id="negotiation-results-overlay" class="results-overlay" style="display:none; z-index: 999;">
+                <div class="results-card high-contrast tier-caution" style="max-height: 80vh; overflow-y: auto;">
+                    <h2 class="alert-title" id="nego-alert-title">ANALYSIS COMPLETE</h2>
+                    <div id="nego-alert-msg" style="font-size: 1.1rem; line-height: 1.5; text-align: left; margin: 1rem 0; color: white;"></div>
+                    <button class="btn-giant-close" style="margin-top: 1rem;" onclick="closeNegotiationResults()">DISMISS</button>
+                </div>
             </div>
         </div>
 

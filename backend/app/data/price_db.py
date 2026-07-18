@@ -18,7 +18,11 @@ from typing import Optional
 from loguru import logger
 
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "tour_resq.db")
+if os.environ.get("VERCEL"):
+    DB_PATH = "/tmp/tour_resq.db"
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "tour_resq.db")
+
 SEED_PATH = os.path.join(os.path.dirname(__file__), "seed_prices.json")
 
 
@@ -87,6 +91,16 @@ def init_price_db():
             language TEXT DEFAULT 'en',
             created_at TEXT DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS contribution_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL,
+            item_name TEXT NOT NULL,
+            region TEXT NOT NULL,
+            created_at DATE DEFAULT CURRENT_DATE
+        );
+        CREATE INDEX IF NOT EXISTS idx_contribution_logs 
+            ON contribution_logs(device_id, item_name, region, created_at);
     """)
 
     # Check if we need to seed
@@ -325,14 +339,26 @@ def get_price_stats(region: str, item_name: str,
 
 def add_verified_price(region: str, category: str, item_name: str,
                        price_vnd: int, venue_type: str = "street",
-                       item_name_vi: str = ""):
+                       item_name_vi: str = "", device_id: str = "") -> bool:
     """
     Add a tourist-verified price to the database.
-    Called when a transaction is confirmed as fair (within normal range).
-    This is the self-updating mechanism.
+    Checks rate limit per device_id to prevent Sybil attacks/Data poisoning.
+    Returns True if added, False if rate limited.
     """
     conn = get_db()
     cursor = conn.cursor()
+
+    if device_id:
+        # Check if this device already contributed to this item today
+        count = cursor.execute("""
+            SELECT COUNT(*) FROM contribution_logs 
+            WHERE device_id = ? AND item_name = ? AND region = ? AND created_at = CURRENT_DATE
+        """, (device_id, item_name, region)).fetchone()[0]
+        
+        if count >= 1:
+            conn.close()
+            logger.warning(f"Sybil attack prevention: Device {device_id} already contributed to {item_name} today.")
+            return False
 
     cursor.execute("""
         INSERT INTO price_references
@@ -341,13 +367,20 @@ def add_verified_price(region: str, category: str, item_name: str,
         VALUES (?, ?, ?, ?, ?, 'tourist_verified', ?, 1)
     """, (region, category, item_name, item_name_vi, price_vnd, venue_type))
 
+    if device_id:
+        cursor.execute("""
+            INSERT INTO contribution_logs (device_id, item_name, region)
+            VALUES (?, ?, ?)
+        """, (device_id, item_name, region))
+
     conn.commit()
 
     # Rebuild stats for this specific item
     rebuild_price_stats(conn)
     conn.close()
 
-    logger.info(f"Added verified price: {item_name} = {price_vnd} VND in {region}")
+    logger.info(f"Added verified price: {item_name} = {price_vnd} VND in {region} by {device_id}")
+    return True
 
 
 def search_item(query: str, region: str = "") -> list[dict]:
