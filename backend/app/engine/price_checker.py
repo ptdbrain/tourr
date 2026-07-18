@@ -355,16 +355,41 @@ Extract ALL items with their prices. Pay close attention to:
 
 Return a structured list of all items found."""
 
-    import base64
     try:
+        import base64
         image_data = base64.b64decode(image_base64)
         image_part = types.Part.from_bytes(data=image_data, mime_type="image/jpeg")
+        
+        # Build schema manually to avoid Pydantic $defs/$ref which google-generativeai rejects
+        ocr_schema = types.Schema(
+            type="OBJECT",
+            properties={
+                "items": types.Schema(
+                    type="ARRAY",
+                    items=types.Schema(
+                        type="OBJECT",
+                        properties={
+                            "item_name": types.Schema(type="STRING"),
+                            "item_name_vi": types.Schema(type="STRING"),
+                            "price_vnd": types.Schema(type="NUMBER"),
+                            "quantity": types.Schema(type="NUMBER"),
+                            "unit": types.Schema(type="STRING"),
+                        },
+                        required=["item_name", "item_name_vi", "price_vnd", "quantity", "unit"]
+                    )
+                ),
+                "currency_detected": types.Schema(type="STRING"),
+                "language_detected": types.Schema(type="STRING")
+            },
+            required=["items", "currency_detected", "language_detected"]
+        )
+
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=[prompt, image_part],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=OCRExtractionResult,
+                response_schema=ocr_schema,
                 temperature=0.1
             )
         )
