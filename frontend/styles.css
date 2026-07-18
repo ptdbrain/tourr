@@ -86,7 +86,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 
 /* ── SPLASH SCREEN ───────────────────────────────────────── */
 #tab-home {
-    display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 3rem 2rem;
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 4.5rem 2rem 3rem;
     background: linear-gradient(to bottom, rgba(7,9,14,0.1) 0%, rgba(7,9,14,0.95) 100%), url('https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop') no-repeat center center / cover;
     min-height: 100dvh; background-attachment: fixed;
     z-index: 500;
@@ -113,7 +113,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 #reveal-location-name { font-size: 2.5rem; font-weight: 700; opacity: 0; transition: opacity 1s; }
 
 /* ── DASHBOARD (BENTO V2) ────────────────────────────────── */
-#tab-dashboard { padding: 2rem 1.5rem; }
+#tab-dashboard { padding: 5rem 1.5rem 2rem; }
 .bento-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
 .greeting-text p { color: var(--text-secondary); font-size: 0.9rem; }
 .greeting-text h2 { font-size: 1.8rem; font-weight: 700; }
@@ -172,7 +172,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 .scan-laser-modern { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--neon-green); box-shadow: 0 0 15px var(--neon-green); animation: laser 2.5s infinite ease-in-out; }
 @keyframes laser { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
-.glass-header { position: absolute; top: 0; left: 0; width: 100%; padding: 2rem 1.5rem; z-index: 2; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+.glass-header { position: absolute; top: 0; left: 0; width: 100%; padding: 4.5rem 1.5rem 2rem; z-index: 2; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
 .glass-controls { position: fixed; bottom: 90px; left: 0; width: 100%; z-index: 100; display: flex; gap: 1rem; padding: 0 1.5rem; }
 
 .btn-giant-action { flex: 1; height: 64px; border-radius: 20px; border: none; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s; }
@@ -202,7 +202,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 /* ── SPLIT SCREEN TRANSLATE ──────────────────────────────── */
 .split-screen-container { height: 100%; display: flex; flex-direction: column; position: relative; }
 .split-half { flex: 1; position: relative; padding: 2rem 1.5rem; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.rotated-180 { transform: rotate(180deg); background: rgba(255,255,255,0.02); }
+.rotated-180 { transform: rotate(180deg); background: rgba(255,255,255,0.02); padding-bottom: 4rem; }
 .lang-tag { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 100px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
 .lang-tag svg { width: 14px; height: 14px; }
 .text-display { font-size: 1.5rem; font-family: var(--font-display); font-weight: 600; width: 100%; max-height: 50%; overflow-y: auto; margin: 2rem 0; }
@@ -222,7 +222,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 .widget-close { margin-left: auto; background: none; border: none; color: white; opacity: 0.7; }
 
 /* ── SOS TAB ─────────────────────────────────────────────── */
-#tab-sos { padding: 3rem 1.5rem; text-align: center; }
+#tab-sos { padding: 5rem 1.5rem 3rem; text-align: center; }
 .danger-title { color: var(--danger-red); font-size: 2.5rem; font-weight: 800; letter-spacing: 2px; margin-bottom: 0.5rem; }
 .sos-subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
 .sos-location-card { display: flex; align-items: center; gap: 1rem; padding: 1.5rem; border-radius: 20px; text-align: left; margin-bottom: 3rem; }
@@ -239,7 +239,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 
 /* ── GUARDIAN & CHAT & BUTTONS ────────────────────────────── */
 #tab-guardian { display: flex; flex-direction: column; padding: 0; }
-.chat-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.chat-header { padding: 4.5rem 1.5rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .chat-box { flex: 1; padding: 1.5rem; overflow-y: auto; padding-bottom: 150px; }
 .chat-msg { max-width: 85%; padding: 1rem; border-radius: 20px; margin-bottom: 1rem; font-size: 0.95rem; line-height: 1.5; }
 .ai-msg { background: rgba(255,255,255,0.05); border-radius: 20px 20px 20px 4px; }
