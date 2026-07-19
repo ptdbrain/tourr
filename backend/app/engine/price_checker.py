@@ -426,7 +426,7 @@ Return a structured JSON list of all items found."""
                 search_results = search_item(item_name, region)
                 
             if search_results:
-                lookup_name = search_results[0].item_name
+                lookup_name = search_results[0]["item_name"]
             else:
                 lookup_name = item_name.lower().replace(" ", "_")
                 
@@ -472,12 +472,17 @@ Return a structured JSON list of all items found."""
         # Summary
         n_items = len(items_checked)
         n_overpriced = sum(1 for i in items_checked if i["db_tier"] == "overpriced")
+        n_slightly_high = sum(1 for i in items_checked if i["db_tier"] == "slightly_high")
         n_insufficient = sum(1 for i in items_checked if i["db_tier"] == "insufficient_data")
 
         if n_overpriced > 0:
             summary = f"{n_overpriced} of {n_items} items are overpriced. Total asked: {int(total_asked):,} VND."
+        elif n_slightly_high > 0:
+            summary = f"{n_slightly_high} of {n_items} items are slightly high. Total asked: {int(total_asked):,} VND."
         elif n_insufficient == n_items:
             summary = f"Cannot verify any of the {n_items} items — insufficient price data in our database."
+        elif n_insufficient > 0:
+            summary = f"{n_items - n_insufficient} of {n_items} items were verified; {n_insufficient} need more local price data. Total asked: {int(total_asked):,} VND."
         else:
             summary = f"All {n_items} items appear fairly priced. Total: {int(total_asked):,} VND."
 

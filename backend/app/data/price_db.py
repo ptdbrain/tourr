@@ -13,6 +13,8 @@ import sqlite3
 import json
 import os
 import math
+import re
+import unicodedata
 from datetime import datetime, timezone
 from typing import Optional
 from loguru import logger
@@ -26,6 +28,40 @@ else:
 SEED_PATH = os.path.join(os.path.dirname(__file__), "seed_prices.json")
 
 
+CONVERSATION_OBSERVATIONS_SCHEMA = """
+    CREATE TABLE IF NOT EXISTS conversation_observations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL,
+        message_id TEXT NOT NULL UNIQUE,
+        region TEXT NOT NULL,
+        speaker TEXT NOT NULL,
+        source_lang TEXT NOT NULL,
+        target_lang TEXT NOT NULL,
+        original_text_scrubbed TEXT DEFAULT '',
+        translated_text TEXT DEFAULT '',
+        intent TEXT DEFAULT 'unknown',
+        item_name TEXT DEFAULT '',
+        item_name_vi TEXT DEFAULT '',
+        price_vnd INTEGER DEFAULT 0,
+        quantity REAL DEFAULT 1.0,
+        risk_level TEXT DEFAULT 'none',
+        scam_type TEXT DEFAULT '',
+        confidence REAL DEFAULT 0.0,
+        should_alert BOOLEAN DEFAULT 0,
+        should_promote_to_price_db BOOLEAN DEFAULT 0,
+        is_verified BOOLEAN DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_conversation_observations_session
+        ON conversation_observations(session_id, created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_conversation_observations_item_region
+        ON conversation_observations(region, item_name, price_vnd);
+"""
+
+
 def get_db() -> sqlite3.Connection:
     """Get a database connection with WAL mode for concurrent reads."""
     conn = sqlite3.connect(DB_PATH)
@@ -33,6 +69,12 @@ def get_db() -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     return conn
+
+
+def ensure_conversation_observations_schema(conn: sqlite3.Connection) -> None:
+    """Apply the lightweight live-conversation observation schema migration."""
+    conn.executescript(CONVERSATION_OBSERVATIONS_SCHEMA)
+    conn.commit()
 
 
 def init_price_db():
@@ -101,12 +143,16 @@ def init_price_db():
         );
         CREATE INDEX IF NOT EXISTS idx_contribution_logs 
             ON contribution_logs(device_id, item_name, region, created_at);
-    """)
 
-    # Check if we need to seed
+    """)
+    ensure_conversation_observations_schema(conn)
+
+    # Keep the local DB aligned with the seed file without duplicating rows.
     count = cursor.execute("SELECT COUNT(*) FROM price_references").fetchone()[0]
-    if count == 0:
+    if os.path.exists(SEED_PATH):
         _seed_database(cursor)
+    elif count == 0:
+        _seed_inline_defaults(cursor)
 
     conn.commit()
 
@@ -129,6 +175,29 @@ def _seed_database(cursor: sqlite3.Cursor):
 
     count = 0
     for entry in seed_data:
+        exists = cursor.execute("""
+            SELECT 1
+            FROM price_references
+            WHERE region = ?
+              AND category = ?
+              AND item_name = ?
+              AND item_name_vi = ?
+              AND price_vnd = ?
+              AND source = ?
+              AND venue_type = ?
+            LIMIT 1
+        """, (
+            entry["region"],
+            entry["category"],
+            entry["item_name"],
+            entry.get("item_name_vi", ""),
+            entry["price_vnd"],
+            entry.get("source", "seed"),
+            entry.get("venue_type", "street"),
+        )).fetchone()
+        if exists:
+            continue
+
         cursor.execute("""
             INSERT INTO price_references
                 (region, category, item_name, item_name_vi, price_vnd, source, venue_type)
@@ -144,7 +213,8 @@ def _seed_database(cursor: sqlite3.Cursor):
         ))
         count += 1
 
-    logger.info(f"Seeded {count} price references from {SEED_PATH}")
+    if count:
+        logger.info(f"Seeded {count} missing price references from {SEED_PATH}")
 
 
 def _seed_inline_defaults(cursor: sqlite3.Cursor):
@@ -435,11 +505,16 @@ def search_item(query: str, region: str = "") -> list[dict]:
     Search for items matching a query string.
     Uses fuzzy matching on item_name and item_name_vi.
     """
+    def normalize(value: str) -> str:
+        value = unicodedata.normalize("NFKD", value or "")
+        value = "".join(ch for ch in value if not unicodedata.combining(ch))
+        value = value.lower().replace("_", " ")
+        return re.sub(r"[^a-z0-9]+", " ", value).strip()
+
     conn = get_db()
     cursor = conn.cursor()
 
     query_like = f"%{query.lower()}%"
-
     if region:
         rows = cursor.execute("""
             SELECT DISTINCT item_name, item_name_vi, category
@@ -454,5 +529,191 @@ def search_item(query: str, region: str = "") -> list[dict]:
             WHERE LOWER(item_name) LIKE ? OR LOWER(item_name_vi) LIKE ?
         """, (query_like, query_like)).fetchall()
 
+    if rows:
+        conn.close()
+        return [dict(r) for r in rows]
+
+    normalized_query = normalize(query)
+    query_tokens = set(normalized_query.split())
+    if not query_tokens:
+        conn.close()
+        return []
+
+    if region:
+        candidates = cursor.execute("""
+            SELECT DISTINCT item_name, item_name_vi, category
+            FROM price_references
+            WHERE region = ?
+        """, (region,)).fetchall()
+    else:
+        candidates = cursor.execute("""
+            SELECT DISTINCT item_name, item_name_vi, category
+            FROM price_references
+        """).fetchall()
+
+    scored_rows = []
+    for row in candidates:
+        item_name_norm = normalize(row["item_name"])
+        item_vi_norm = normalize(row["item_name_vi"])
+        item_tokens = set(item_name_norm.split())
+        vi_tokens = set(item_vi_norm.split())
+
+        score = 0
+        if item_name_norm and item_name_norm in normalized_query:
+            score = max(score, 100 + len(item_tokens))
+        if item_vi_norm and item_vi_norm in normalized_query:
+            score = max(score, 90 + len(vi_tokens))
+        if item_tokens and item_tokens.issubset(query_tokens):
+            score = max(score, 70 + len(item_tokens))
+        if vi_tokens and vi_tokens.issubset(query_tokens):
+            score = max(score, 60 + len(vi_tokens))
+
+        if score:
+            scored_rows.append((score, dict(row)))
+
     conn.close()
-    return [dict(r) for r in rows]
+    scored_rows.sort(key=lambda item: (-item[0], item[1]["item_name"]))
+    return [row for _, row in scored_rows]
+
+
+def add_conversation_observation(
+    session_id: str,
+    message_id: str,
+    region: str,
+    speaker: str,
+    source_lang: str,
+    target_lang: str,
+    original_text_scrubbed: str,
+    translated_text: str,
+    intent: str,
+    item_name: str,
+    item_name_vi: str,
+    price_vnd: int,
+    quantity: float,
+    risk_level: str,
+    scam_type: str,
+    confidence: float,
+    should_alert: bool,
+    should_promote_to_price_db: bool,
+) -> int:
+    """Store unverified AI-extracted conversation data for later review/editing."""
+    conn = get_db()
+    ensure_conversation_observations_schema(conn)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT OR IGNORE INTO conversation_observations
+            (session_id, message_id, region, speaker, source_lang, target_lang,
+             original_text_scrubbed, translated_text, intent, item_name, item_name_vi,
+             price_vnd, quantity, risk_level, scam_type, confidence,
+             should_alert, should_promote_to_price_db)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        session_id,
+        message_id,
+        region,
+        speaker,
+        source_lang,
+        target_lang,
+        original_text_scrubbed,
+        translated_text,
+        intent,
+        item_name,
+        item_name_vi,
+        int(price_vnd or 0),
+        float(quantity or 1.0),
+        risk_level,
+        scam_type,
+        float(confidence or 0.0),
+        1 if should_alert else 0,
+        1 if should_promote_to_price_db else 0,
+    ))
+
+    conn.commit()
+    observation_id = cursor.lastrowid
+    conn.close()
+    return int(observation_id)
+
+
+def get_recent_session_observations(session_id: str, limit: int = 10) -> list[dict]:
+    """Return recent editable observations for a live conversation session."""
+    conn = get_db()
+    ensure_conversation_observations_schema(conn)
+    cursor = conn.cursor()
+    rows = cursor.execute("""
+        SELECT * FROM conversation_observations
+        WHERE session_id = ?
+        ORDER BY id DESC
+        LIMIT ?
+    """, (session_id, limit)).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+_OBSERVATION_EDITABLE_FIELDS = {
+    "region",
+    "speaker",
+    "source_lang",
+    "target_lang",
+    "original_text_scrubbed",
+    "translated_text",
+    "intent",
+    "item_name",
+    "item_name_vi",
+    "price_vnd",
+    "quantity",
+    "risk_level",
+    "scam_type",
+    "confidence",
+    "should_alert",
+    "should_promote_to_price_db",
+    "is_verified",
+}
+
+
+def update_conversation_observation(observation_id: int, **updates) -> bool:
+    """Update selected observation fields using a strict allow-list."""
+    allowed_updates = {
+        key: value for key, value in updates.items()
+        if key in _OBSERVATION_EDITABLE_FIELDS
+    }
+    if not allowed_updates:
+        return False
+
+    for key in ("should_alert", "should_promote_to_price_db", "is_verified"):
+        if key in allowed_updates:
+            allowed_updates[key] = 1 if allowed_updates[key] else 0
+    if "price_vnd" in allowed_updates:
+        allowed_updates["price_vnd"] = int(allowed_updates["price_vnd"] or 0)
+    if "quantity" in allowed_updates:
+        allowed_updates["quantity"] = float(allowed_updates["quantity"] or 1.0)
+    if "confidence" in allowed_updates:
+        allowed_updates["confidence"] = float(allowed_updates["confidence"] or 0.0)
+
+    allowed_updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    assignments = ", ".join(f"{key} = ?" for key in allowed_updates)
+    values = list(allowed_updates.values()) + [observation_id]
+
+    conn = get_db()
+    ensure_conversation_observations_schema(conn)
+    cursor = conn.cursor()
+    cursor.execute(
+        f"UPDATE conversation_observations SET {assignments} WHERE id = ?",
+        values,
+    )
+    conn.commit()
+    changed = cursor.rowcount > 0
+    conn.close()
+    return changed
+
+
+def verify_conversation_observation(
+    observation_id: int,
+    should_promote_to_price_db: bool = False,
+) -> bool:
+    """Mark an observation as reviewed without automatically changing price references."""
+    return update_conversation_observation(
+        observation_id,
+        is_verified=True,
+        should_promote_to_price_db=should_promote_to_price_db,
+    )

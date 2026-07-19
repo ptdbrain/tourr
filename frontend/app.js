@@ -4,7 +4,7 @@
  */
 
 // Configuration
-const API_BASE = 'https://tour-resq-production.up.railway.app'; // Railway backend
+const API_BASE = window.__TOUR_RESQ_API_BASE || window.location.origin;
 let currentLang = localStorage.getItem('tour_resq_lang') || document.documentElement.getAttribute('data-lang') || 'en';
 
 // Global Evidence Buffer
@@ -119,6 +119,7 @@ window.selectLanguage = function(lang) {
 function updateLanguageUI(lang) {
     document.documentElement.lang = lang;
     document.documentElement.setAttribute('data-lang', lang);
+    updateSpeechRecognitionLanguage();
 }
 
 // ── 1. ONBOARDING & PERMISSIONS ──────────────────────────────
@@ -164,17 +165,23 @@ async function doLocationReveal() {
     const nameEl = document.getElementById('reveal-location-name');
     
     // Reverse Geocoding with Nominatim API (OpenStreetMap)
+    const reverseController = new AbortController();
+    const reverseTimeout = setTimeout(() => reverseController.abort(), 1500);
     try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLocation.lat}&lon=${userLocation.lng}&format=json`, {
             headers: {
                 'Accept-Language': 'en'
-            }
+            },
+            signal: reverseController.signal
         });
         const data = await res.json();
-        let placeName = data.address.amenity || data.address.restaurant || data.address.road || data.address.city || "Hanoi, Vietnam";
+        const address = data.address || {};
+        let placeName = address.amenity || address.restaurant || address.road || address.city || "Hanoi, Vietnam";
         userLocation.name = placeName;
     } catch(e) {
         userLocation.name = "Hanoi (Fallback)";
+    } finally {
+        clearTimeout(reverseTimeout);
     }
     
     if (globalMap) {
@@ -526,14 +533,32 @@ window.stopTranslateAndGoHome = function() {
 let vendorMicActive = false; let touristMicActive = false;
 let vendorRecognition = null; let touristRecognition = null;
 let liveSessionId = null;
+let lastPriceWarningAt = 0;
+
+function getTouristSpeechLang() {
+    return currentLang === 'ko' ? 'ko-KR' : currentLang === 'zh' ? 'zh-CN' : currentLang === 'ru' ? 'ru-RU' : 'en-US';
+}
+
+function updateSpeechRecognitionLanguage() {
+    if (touristRecognition) touristRecognition.lang = getTouristSpeechLang();
+    const touristLangTag = document.getElementById('tourist-lang-tag');
+    if (touristLangTag) {
+        const labels = { en: 'English', ko: '한국어', zh: '中文', ru: 'Русский' };
+        touristLangTag.innerHTML = `<i data-feather="globe"></i> ${labels[currentLang] || 'English'}`;
+        if (window.feather) feather.replace();
+    }
+}
 
 async function ensureLiveSession() {
     if (!liveSessionId) {
         try {
             const res = await fetch(API_BASE + '/api/v1/live/start', { method: 'POST' });
+            if (!res.ok) throw new Error(`Session API failed (${res.status})`);
             const data = await res.json();
             if (data.status === 'success') liveSessionId = data.session_id;
-        } catch(e) {}
+        } catch(e) {
+            showSmartWidget("TRANSLATION ERROR", e.message || "Could not start live translation session.", true);
+        }
     }
 }
 
@@ -568,8 +593,14 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         await handleMessage(text, 'vi', currentLang, 'vendor', 'tourist-text');
         toggleVendorMic();
     };
+    vendorRecognition.onerror = function(ev) {
+        vendorMicActive = false;
+        const btn = document.querySelector('.mic-vendor');
+        if (btn) { btn.style.background = 'transparent'; btn.style.color = 'white'; }
+        showSmartWidget("MIC ERROR", ev.error || "Could not hear Vietnamese speech. Try the text box.", true);
+    };
 
-    touristRecognition = new SR(); touristRecognition.lang = currentLang === 'ko' ? 'ko-KR' : currentLang === 'zh' ? 'zh-CN' : 'en-US';
+    touristRecognition = new SR(); touristRecognition.lang = getTouristSpeechLang();
     touristRecognition.continuous = false;
     touristRecognition.onresult = async function(ev) {
         const text = ev.results[0][0].transcript;
@@ -578,16 +609,38 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         await handleMessage(text, currentLang, 'vi', 'tourist', 'vendor-text');
         toggleTouristMic();
     };
+    touristRecognition.onerror = function(ev) {
+        touristMicActive = false;
+        const btn = document.querySelector('.mic-tourist');
+        if (btn) { btn.style.background = 'transparent'; btn.style.color = 'white'; }
+        showSmartWidget("MIC ERROR", ev.error || "Could not hear tourist speech. Try the text box.", true);
+    };
+} else {
+    document.addEventListener('DOMContentLoaded', () => {
+        showSmartWidget("TEXT MODE", "Speech recognition is unavailable in this browser. Use the text boxes.", false);
+    });
 }
 
 async function handleMessage(text, src, tgt, speaker, tgtEl) {
     await ensureLiveSession();
+    if (!liveSessionId) return;
     try {
         const res = await fetch(API_BASE + '/api/v1/live/message', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session_id: liveSessionId, text, source_lang: src, target_lang: tgt, speaker })
+            body: JSON.stringify({
+                session_id: liveSessionId,
+                text,
+                source_lang: src,
+                target_lang: tgt,
+                speaker,
+                region: getRegionFromCoordinates(userLocation.lat, userLocation.lng)
+            })
         });
+        if (!res.ok) throw new Error(`Live API failed (${res.status})`);
         const data = await res.json();
+        if (data.translation_error) {
+            showSmartWidget("TRANSLATION ERROR", data.translation_error, true);
+        }
         if (data.translated) {
             document.getElementById(tgtEl).textContent = data.translated;
             if (window.speechSynthesis) {
@@ -595,19 +648,72 @@ async function handleMessage(text, src, tgt, speaker, tgtEl) {
                 utterance.lang = tgt === 'vi' ? 'vi-VN' : tgt === 'ko' ? 'ko-KR' : tgt === 'zh' ? 'zh-CN' : 'en-US';
                 window.speechSynthesis.speak(utterance);
             }
+        } else {
+            showSmartWidget("TRANSLATION EMPTY", "The provider returned no translation.", true);
         }
         
         // Smart AI Widget Triggers
-        if (data.is_suspicious) {
+        if (data.price_alert?.should_alert) {
+            const isHighRisk = data.price_alert.tier === 'overpriced';
+            lastPriceWarningAt = Date.now();
+            showSmartWidget("PRICE WARNING", data.price_alert.message, isHighRisk);
+        } else if (data.is_suspicious) {
             showSmartWidget("⚠️ WARNING", "Suspicious coercion or scam words detected. Be careful.", true);
         } else if (data.is_price_discussion) {
             showSmartWidget("💰 PRICE DETECTED", "Negotiating prices. Remember to verify with the Scan Bill feature.", false);
+        }
+        if (data.analysis_status === 'queued') {
+            setTimeout(() => refreshLiveInsights(liveSessionId), 900);
+            setTimeout(() => refreshLiveInsights(liveSessionId), 1800);
+        }
+    } catch(e) {
+        showSmartWidget("TRANSLATION ERROR", e.message || "Could not reach the translation service.", true);
+    }
+}
+
+window.sendManualLiveMessage = async function(speaker) {
+    const isTourist = speaker === 'tourist';
+    const input = document.getElementById(isTourist ? 'tourist-manual-input' : 'vendor-manual-input');
+    const text = input?.value?.trim();
+    if (!text) return;
+
+    if (isTourist) {
+        document.getElementById('tourist-text').textContent = text;
+        window.evidenceBuffer.transcripts.push(`Tourist: ${text}`);
+        input.value = '';
+        await handleMessage(text, currentLang, 'vi', 'tourist', 'vendor-text');
+    } else {
+        document.getElementById('vendor-text').textContent = text;
+        window.evidenceBuffer.transcripts.push(`Vendor: ${text}`);
+        input.value = '';
+        await handleMessage(text, 'vi', currentLang, 'vendor', 'tourist-text');
+    }
+};
+
+async function refreshLiveInsights(sessionId) {
+    if (!sessionId) return;
+    try {
+        const res = await fetch(API_BASE + `/api/v1/live/insights/${sessionId}?limit=3`);
+        const data = await res.json();
+        if (data.status !== 'success' || !data.observations?.length) return;
+
+        const latest = data.observations[0];
+        const warningIsFresh = Date.now() - lastPriceWarningAt < 6000;
+        if (latest.should_alert) {
+            showSmartWidget("WARNING", latest.summary || "Potential tourist risk detected.", true);
+        } else if (latest.price_vnd > 0 && !warningIsFresh) {
+            const item = latest.item_name || "item";
+            showSmartWidget("PRICE CAPTURED", `${item}: ${latest.price_vnd.toLocaleString()} VND`, false);
         }
     } catch(e) {}
 }
 
 window.toggleVendorMic = function() {
     const btn = document.querySelector('.mic-vendor');
+    if (!vendorRecognition) {
+        showSmartWidget("TEXT MODE", "Speech recognition is unavailable in this browser. Use the vendor text box.", false);
+        return;
+    }
     vendorMicActive = !vendorMicActive;
     if (vendorMicActive) {
         btn.style.background = 'white'; btn.style.color = 'black';
@@ -620,6 +726,10 @@ window.toggleVendorMic = function() {
 }
 window.toggleTouristMic = function() {
     const btn = document.querySelector('.mic-tourist');
+    if (!touristRecognition) {
+        showSmartWidget("TEXT MODE", "Speech recognition is unavailable in this browser. Use the tourist text box.", false);
+        return;
+    }
     touristMicActive = !touristMicActive;
     if (touristMicActive) {
         btn.style.background = 'white'; btn.style.color = 'black';

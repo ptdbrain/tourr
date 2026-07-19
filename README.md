@@ -68,6 +68,28 @@ Context-aware translation for **confrontation scenarios** (price disputes, scams
 - **Voice Input** — Web Speech API in KO/ZH/EN/RU
 - **Show-to-Vendor Mode** — large Vietnamese text for showing your phone
 
+## Live Translation Architecture
+
+Tour-resQ uses a two-path live translation design:
+
+1. **Fast path:** browser SpeechRecognition converts speech to text, the backend translates with MyMemory public translation when `TRANSLATION_PROVIDER=mymemory` (no API key required for demo), and the frontend reads the translated text with SpeechSynthesis. Google Translate can still be enabled later with `TRANSLATION_PROVIDER=google`.
+2. **AI path:** Gemini analyzes the same utterance in the background, extracts prices, risk signals, and intent, then stores editable unverified observations in `conversation_observations`.
+
+This keeps conversation latency low while preserving AI safety. AI-extracted prices are not inserted directly into the trusted price reference database.
+
+Editable observation data is exposed through `GET /api/v1/live/insights/{session_id}`, `PATCH /api/v1/live/observations/{observation_id}`, and `POST /api/v1/live/observations/{observation_id}/verify` so sample data can be reviewed and corrected before promotion.
+
+### Live Translation Environment
+
+```env
+TRANSLATION_PROVIDER=mymemory
+MYMEMORY_EMAIL=
+GOOGLE_TRANSLATE_API_KEY=your_google_translate_key
+GEMINI_API_KEY=your_gemini_key
+ENABLE_LIVE_AI_ANALYSIS=true
+LIVE_ANALYSIS_MIN_CONFIDENCE=0.65
+```
+
 ## Supported Languages
 
 | Code | Language | Market Priority |

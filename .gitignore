@@ -13,6 +13,8 @@ env/
 
 # Database
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 
 # Environment
@@ -35,6 +37,9 @@ desktop.ini
 # Logs
 *.log
 logs/
+
+# Deploy tooling
+.vercel/
 
 # Uploads
 uploads/

@@ -11,6 +11,13 @@ load_dotenv()
 class Settings:
     """Application settings loaded from environment variables."""
 
+    def __init__(self):
+        self.GOOGLE_TRANSLATE_API_KEY = os.getenv("GOOGLE_TRANSLATE_API_KEY", "")
+        self.MYMEMORY_EMAIL = os.getenv("MYMEMORY_EMAIL", "")
+        self.TRANSLATION_PROVIDER = os.getenv("TRANSLATION_PROVIDER", "mymemory").lower()
+        self.ENABLE_LIVE_AI_ANALYSIS = os.getenv("ENABLE_LIVE_AI_ANALYSIS", "true").lower() == "true"
+        self.LIVE_ANALYSIS_MIN_CONFIDENCE = float(os.getenv("LIVE_ANALYSIS_MIN_CONFIDENCE", "0.65"))
+
     # --- App ---
     APP_NAME: str = "Tour-resQ"
     APP_VERSION: str = "1.0.0"
@@ -19,6 +26,13 @@ class Settings:
     # --- AI / LLM ---
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+
+    # --- Live Translation ---
+    GOOGLE_TRANSLATE_API_KEY: str = os.getenv("GOOGLE_TRANSLATE_API_KEY", "")
+    MYMEMORY_EMAIL: str = os.getenv("MYMEMORY_EMAIL", "")
+    TRANSLATION_PROVIDER: str = os.getenv("TRANSLATION_PROVIDER", "mymemory").lower()
+    ENABLE_LIVE_AI_ANALYSIS: bool = os.getenv("ENABLE_LIVE_AI_ANALYSIS", "true").lower() == "true"
+    LIVE_ANALYSIS_MIN_CONFIDENCE: float = float(os.getenv("LIVE_ANALYSIS_MIN_CONFIDENCE", "0.65"))
 
     # --- Database ---
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./tour_resq.db")
