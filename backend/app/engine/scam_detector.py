@@ -179,10 +179,10 @@ DEMO_GUARDIAN_SCENARIOS = {
     },
     "money exchange shop offers only 500k vnd for 50 dollars": {
         "pattern_id": "money_exchange",
-        "analysis": "This resembles a severe exchange-rate scam.",
+        "analysis": "Severe exchange-rate scam: 50 USD for only 500,000 VND is far below a normal exchange value.",
         "advice": [
-            "Do not accept this exchange rate; 50 USD should be far above 500,000 VND.",
-            "Use a bank or licensed exchange counter, and call 113 if they pressure you.",
+            "Do not hand over your cash or accept the deal; ask for your money back immediately.",
+            "Move to a bank or licensed exchange counter, keep the shop name/location as evidence, and call 113 if they pressure you.",
         ],
     },
 }

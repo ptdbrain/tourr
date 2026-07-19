@@ -27,7 +27,7 @@ def anyio_backend():
         "Money exchange shop offers only 500k VND for 50 dollars",
         "money_exchange",
         "high",
-        "This resembles a severe exchange-rate scam.",
+        "Severe exchange-rate scam: 50 USD for only 500,000 VND is far below a normal exchange value.",
     ),
 ])
 async def test_guardian_demo_scenarios_are_deterministic(description, pattern_id, severity, expected):
@@ -71,3 +71,7 @@ def test_guardian_api_returns_demo_scam_assessments(monkeypatch):
         assert body["scam_assessment"]["severity"] == "high"
         assert body["scam_assessment"]["patterns"][0]["id"] == pattern_id
         assert body["scam_assessment"]["ai_analysis"]
+        if pattern_id == "money_exchange":
+            assert "50 USD" in body["scam_assessment"]["ai_analysis"]
+            assert "500,000 VND" in body["scam_assessment"]["ai_analysis"]
+            assert "Do not hand over your cash" in body["scam_assessment"]["advice"][0]
