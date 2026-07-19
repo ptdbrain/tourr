@@ -16,8 +16,8 @@ def test_translate_tab_has_manual_text_path_and_cache_bust():
 
     assert "tourist-manual-input" in index_html
     assert "vendor-manual-input" in index_html
-    assert "styles.css?v=34" in index_html
-    assert "app.js?v=34" in index_html
+    assert "styles.css?v=35" in index_html
+    assert "app.js?v=35" in index_html
     assert "window.sendManualLiveMessage" in app_js
     assert "data.price_alert?.should_alert" in app_js
     assert "PRICE WARNING" in app_js
@@ -33,3 +33,18 @@ def test_frontend_has_safe_external_dependency_fallbacks():
     assert "if (window.feather) feather.replace();" in index_html
     assert "AbortController" in app_js
     assert "reverseController.abort()" in app_js
+
+
+def test_sos_slide_starts_loud_siren_and_cancel_stops_it():
+    project_root = Path(__file__).resolve().parents[1]
+    app_js = (project_root / "frontend" / "app.js").read_text(encoding="utf-8")
+    styles_css = (project_root / "frontend" / "styles.css").read_text(encoding="utf-8")
+
+    assert "function startSOSSiren()" in app_js
+    assert "function stopSOSSiren()" in app_js
+    assert "window.AudioContext || window.webkitAudioContext" in app_js
+    assert "sosMasterGain.gain.setValueAtTime(0.95" in app_js
+    assert "startSOSSiren();" in app_js
+    assert "stopSOSSiren();" in app_js
+    assert "sos-siren-active" in app_js
+    assert "@keyframes sos-flash" in styles_css

@@ -15,6 +15,7 @@ class Settings:
         self.GOOGLE_TRANSLATE_API_KEY = os.getenv("GOOGLE_TRANSLATE_API_KEY", "")
         self.MYMEMORY_EMAIL = os.getenv("MYMEMORY_EMAIL", "")
         self.TRANSLATION_PROVIDER = os.getenv("TRANSLATION_PROVIDER", "mymemory").lower()
+        self.ENABLE_DEMO_TRANSLATION = os.getenv("ENABLE_DEMO_TRANSLATION", "true").lower() == "true"
         self.ENABLE_LIVE_AI_ANALYSIS = os.getenv("ENABLE_LIVE_AI_ANALYSIS", "true").lower() == "true"
         self.LIVE_ANALYSIS_MIN_CONFIDENCE = float(os.getenv("LIVE_ANALYSIS_MIN_CONFIDENCE", "0.65"))
 
@@ -31,6 +32,7 @@ class Settings:
     GOOGLE_TRANSLATE_API_KEY: str = os.getenv("GOOGLE_TRANSLATE_API_KEY", "")
     MYMEMORY_EMAIL: str = os.getenv("MYMEMORY_EMAIL", "")
     TRANSLATION_PROVIDER: str = os.getenv("TRANSLATION_PROVIDER", "mymemory").lower()
+    ENABLE_DEMO_TRANSLATION: bool = os.getenv("ENABLE_DEMO_TRANSLATION", "true").lower() == "true"
     ENABLE_LIVE_AI_ANALYSIS: bool = os.getenv("ENABLE_LIVE_AI_ANALYSIS", "true").lower() == "true"
     LIVE_ANALYSIS_MIN_CONFIDENCE: float = float(os.getenv("LIVE_ANALYSIS_MIN_CONFIDENCE", "0.65"))
 

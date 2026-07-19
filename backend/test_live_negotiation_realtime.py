@@ -94,6 +94,34 @@ def test_live_message_returns_realtime_price_alert(monkeypatch):
     assert "30,000 VND" in body["price_alert"]["message"]
 
 
+def test_live_message_demo_phrasebook_keeps_price_alert(monkeypatch):
+    from app.engine import realtime_translator
+
+    monkeypatch.setattr(live_negotiation.settings, "ENABLE_LIVE_AI_ANALYSIS", False)
+    monkeypatch.setattr(realtime_translator.settings, "ENABLE_DEMO_TRANSLATION", True, raising=False)
+    monkeypatch.setattr(realtime_translator.settings, "TRANSLATION_PROVIDER", "mymemory")
+
+    client = TestClient(app)
+    start = client.post("/api/v1/live/start").json()
+    response = client.post("/api/v1/live/message", json={
+        "session_id": start["session_id"],
+        "text": "30 nghin dong mot chiec banh mi",
+        "source_lang": "vi",
+        "target_lang": "en",
+        "speaker": "vendor",
+        "region": "hanoi",
+    })
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["translated"] == "30,000 VND for one banh mi."
+    assert body["provider"] == "demo_phrasebook"
+    assert body["translation_error"] == ""
+    assert body["analysis_status"] == "disabled"
+    assert body["price_alert"]["should_alert"] is True
+    assert body["price_alert"]["item_name"] == "banh_mi"
+
+
 def test_live_observation_can_be_edited_from_api(tmp_path, monkeypatch):
     monkeypatch.setattr(price_db, "DB_PATH", str(tmp_path / "tour_resq_test.db"))
     price_db.init_price_db()

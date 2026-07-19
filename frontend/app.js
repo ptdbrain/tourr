@@ -15,6 +15,10 @@ window.evidenceBuffer = {
 
 let userLocation = { lat: 21.0285, lng: 105.8542, name: "Unknown Location" };
 let cameraStream = null;
+let sosAudioContext = null;
+let sosSirenNodes = [];
+let sosSirenTimer = null;
+let sosSirenSweep = null;
 
 // Handle language selection on homepage
 window.changeLanguage = function(lang) {
@@ -802,6 +806,86 @@ window.closeScamResults = function() { document.getElementById('scam-results-ove
 
 
 // ── 6. SOS (Slide to SOS) ──────────────────────────────────
+function stopSOSSiren() {
+    if (sosSirenTimer) {
+        clearTimeout(sosSirenTimer);
+        sosSirenTimer = null;
+    }
+    if (sosSirenSweep) {
+        clearInterval(sosSirenSweep);
+        sosSirenSweep = null;
+    }
+    sosSirenNodes.forEach(node => {
+        try {
+            if (node.stop) node.stop();
+            if (node.disconnect) node.disconnect();
+        } catch(e) {}
+    });
+    sosSirenNodes = [];
+    document.body?.classList.remove('sos-siren-active');
+}
+
+function startSOSSiren() {
+    try {
+        stopSOSSiren();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        sosAudioContext = sosAudioContext || new AudioContextClass();
+        if (sosAudioContext.state === 'suspended') sosAudioContext.resume();
+
+        const now = sosAudioContext.currentTime;
+        const sosMasterGain = sosAudioContext.createGain();
+        const sirenGain = sosAudioContext.createGain();
+        const compressor = sosAudioContext.createDynamicsCompressor();
+        const oscillatorHigh = sosAudioContext.createOscillator();
+        const oscillatorLow = sosAudioContext.createOscillator();
+
+        sosMasterGain.gain.setValueAtTime(0.95, now);
+        sirenGain.gain.setValueAtTime(0.0001, now);
+        sirenGain.gain.exponentialRampToValueAtTime(0.85, now + 0.08);
+
+        compressor.threshold.setValueAtTime(-18, now);
+        compressor.knee.setValueAtTime(20, now);
+        compressor.ratio.setValueAtTime(8, now);
+        compressor.attack.setValueAtTime(0.003, now);
+        compressor.release.setValueAtTime(0.18, now);
+
+        oscillatorHigh.type = 'square';
+        oscillatorLow.type = 'sawtooth';
+        oscillatorHigh.frequency.setValueAtTime(880, now);
+        oscillatorLow.frequency.setValueAtTime(440, now);
+
+        oscillatorHigh.connect(sirenGain);
+        oscillatorLow.connect(sirenGain);
+        sirenGain.connect(compressor);
+        compressor.connect(sosMasterGain);
+        sosMasterGain.connect(sosAudioContext.destination);
+
+        oscillatorHigh.start(now);
+        oscillatorLow.start(now);
+        sosSirenNodes = [oscillatorHigh, oscillatorLow, sirenGain, compressor, sosMasterGain];
+        document.body?.classList.add('sos-siren-active');
+
+        let high = false;
+        sosSirenSweep = setInterval(() => {
+            high = !high;
+            const t = sosAudioContext.currentTime;
+            oscillatorHigh.frequency.cancelScheduledValues(t);
+            oscillatorLow.frequency.cancelScheduledValues(t);
+            oscillatorHigh.frequency.linearRampToValueAtTime(high ? 1320 : 760, t + 0.22);
+            oscillatorLow.frequency.linearRampToValueAtTime(high ? 660 : 380, t + 0.22);
+            if (navigator.vibrate) {
+                try { navigator.vibrate([80, 40, 80]); } catch(e) {}
+            }
+        }, 420);
+
+        sosSirenTimer = setTimeout(stopSOSSiren, 12000);
+    } catch(e) {
+        console.warn("SOS siren failed", e);
+    }
+}
+
 function initSlideToSOS() {
     const knob = document.getElementById('sos-knob');
     const track = document.getElementById('sos-track');
@@ -833,6 +917,7 @@ function initSlideToSOS() {
         const maxDragX = getMaxDragX();
         knob.style.transform = `translateX(${maxDragX}px)`; knob.style.backgroundColor = '#00FF66';
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300, 100, 300]);
+        startSOSSiren();
 
         const panel = document.getElementById('sos-active-panel');
         if (panel) panel.style.display = 'block';
@@ -903,6 +988,7 @@ window.dispatchReport = async function() {
 window.cancelSOS = function() {
     const panel = document.getElementById('sos-active-panel');
     const knob = document.getElementById('sos-knob');
+    stopSOSSiren();
     if (panel) panel.style.display = 'none';
     if (knob) {
         knob.style.transition = 'transform 0.3s ease';

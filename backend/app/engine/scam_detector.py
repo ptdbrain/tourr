@@ -17,6 +17,7 @@ Common scam patterns specific to Vietnam:
 - Street vendor overcharging
 """
 import re
+import unicodedata
 from typing import Optional
 from dataclasses import dataclass, asdict, field
 from app.i18n.translations import t
@@ -159,6 +160,67 @@ SCAM_PATTERNS: list[ScamPattern] = [
 ]
 
 
+DEMO_GUARDIAN_SCENARIOS = {
+    "taxi driver says the meter is broken and wants 800k to the airport": {
+        "pattern_id": "taxi_meter",
+        "analysis": "This resembles a taxi meter or route scam.",
+        "advice": [
+            "Do not get in or continue the ride if you feel unsafe.",
+            "Use Grab or an official taxi counter, and call 113 if threatened.",
+        ],
+    },
+    "a shoe shiner grabbed my shoes and demands 500k": {
+        "pattern_id": "forced_service",
+        "analysis": "This resembles a forced shoe-shine service scam.",
+        "advice": [
+            "Refuse calmly and do not pay the demanded amount.",
+            "Move toward a hotel, shop, or police officer and call 113 if blocked.",
+        ],
+    },
+    "money exchange shop gave me fake bills and a bad rate": {
+        "pattern_id": "money_exchange",
+        "analysis": "This resembles a money exchange scam.",
+        "advice": [
+            "Stop the exchange and keep the bills visible as evidence.",
+            "Use a bank or licensed exchange counter, and call 113 if they refuse to return your money.",
+        ],
+    },
+}
+
+
+def _normalize_demo_text(text: str) -> str:
+    value = unicodedata.normalize("NFD", text.lower())
+    value = "".join(char for char in value if unicodedata.category(char) != "Mn")
+    value = value.replace("đ", "d")
+    value = re.sub(r"[^a-z0-9]+", " ", value)
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _demo_guardian_result(description: str, lang: str) -> Optional[ScamDetectionResult]:
+    scenario = DEMO_GUARDIAN_SCENARIOS.get(_normalize_demo_text(description))
+    if not scenario:
+        return None
+
+    pattern = next(
+        item for item in SCAM_PATTERNS
+        if item.id == scenario["pattern_id"]
+    )
+    return ScamDetectionResult(
+        detected=True,
+        patterns=[{
+            "id": pattern.id,
+            "name": t(pattern.name_key, lang),
+            "severity": "high",
+            "category": pattern.category,
+            "match_confidence": 1.0,
+        }],
+        ai_analysis=scenario["analysis"],
+        advice=scenario["advice"],
+        severity="high",
+        language=lang,
+    )
+
+
 def detect_scam_patterns(
     description: str,
     lang: str = "en",
@@ -228,6 +290,10 @@ async def detect_scam_with_ai(
     Layer 2: AI-powered analysis (requires internet).
     Combines keyword results with AI reasoning.
     """
+    demo_result = _demo_guardian_result(description, lang)
+    if demo_result:
+        return demo_result
+
     # First, run pattern matching
     result = detect_scam_patterns(description, lang)
 

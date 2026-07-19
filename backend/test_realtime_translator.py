@@ -23,6 +23,93 @@ def test_live_translation_settings_are_available(monkeypatch):
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize("spoken_text", [
+    "30 nghin dong mot chiec banh mi",
+    "30 nghìn đồng một chiếc bánh mì",
+])
+@pytest.mark.parametrize(("target_lang", "expected_translation"), [
+    ("en", "30,000 VND for one banh mi."),
+    ("ko", "반미 하나에 30,000동입니다."),
+    ("zh", "一个越南法棍是30,000越南盾。"),
+    ("ru", "Один бань ми стоит 30 000 донгов."),
+])
+async def test_demo_banh_mi_phrasebook_returns_exact_translation_without_network(
+    monkeypatch,
+    spoken_text,
+    target_lang,
+    expected_translation,
+):
+    from app.engine import realtime_translator
+
+    class FailingClient:
+        def __init__(self, *args, **kwargs):
+            raise AssertionError("network should not be used for demo phrasebook matches")
+
+    monkeypatch.setattr(realtime_translator.settings, "TRANSLATION_PROVIDER", "mymemory")
+    monkeypatch.setattr(realtime_translator.httpx, "AsyncClient", FailingClient)
+
+    result = await realtime_translator.translate_realtime(
+        text=spoken_text,
+        source_lang="vi",
+        target_lang=target_lang,
+        context="casual",
+    )
+
+    assert result["translation"] == expected_translation
+    assert result["provider"] == "demo_phrasebook"
+    assert result["error"] == ""
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(("text", "source_lang", "target_lang", "expected_translation"), [
+    (
+        "gia nay da la gia tot roi",
+        "vi",
+        "en",
+        "This is already a good price.",
+    ),
+    (
+        "duoc toi ban cho ban hai muoi nghin",
+        "vi",
+        "en",
+        "Okay, I can sell it to you for 20,000 VND.",
+    ),
+    (
+        "Can you sell it for twenty thousand dong?",
+        "en",
+        "vi",
+        "Bạn có thể bán giá hai mươi nghìn đồng không?",
+    ),
+])
+async def test_demo_negotiation_script_returns_exact_translation_without_network(
+    monkeypatch,
+    text,
+    source_lang,
+    target_lang,
+    expected_translation,
+):
+    from app.engine import realtime_translator
+
+    class FailingClient:
+        def __init__(self, *args, **kwargs):
+            raise AssertionError("network should not be used for demo phrasebook matches")
+
+    monkeypatch.setattr(realtime_translator.settings, "TRANSLATION_PROVIDER", "mymemory")
+    monkeypatch.setattr(realtime_translator.httpx, "AsyncClient", FailingClient)
+
+    result = await realtime_translator.translate_realtime(
+        text=text,
+        source_lang=source_lang,
+        target_lang=target_lang,
+        context="negotiation",
+    )
+
+    assert result["translation"] == expected_translation
+    assert result["provider"] == "demo_phrasebook"
+    assert result["error"] == ""
+
+
+@pytest.mark.anyio
 async def test_google_translate_success(monkeypatch):
     from app.engine import realtime_translator
 
