@@ -33,5 +33,19 @@ The AI pair-programmer recommended using **Median and Median Absolute Deviation 
 **AI Contribution:**
 The AI provided the exact structured output schema used in `vision_analyzer.py`, including edge cases like converting 'k' (e.g., '40k') to '40000'.
 
+### Phase 4: Data Strategy & Anti-Poisoning
+**Prompt Excerpt:**
+> "The current database is small and users can poison the database by submitting fake prices. How do we build a robust data strategy for the hackathon criteria?"
+
+**AI Contribution:**
+The AI pair-programmer designed the **"Crowdsourced Pricing Flywheel"** and implemented a dual-layer strategy. It rewrote the `contribute-price` endpoint in `routes.py` to strictly reject any price not flagged as `tier == 'fair'` by the Z-Score engine. For missing data, it integrated the `delivery_crawler.py` to use Gemini Search Grounding for real-time price estimation from local apps (Foody/GrabFood), creating a fully AI-Native self-updating data mechanism.
+
+### Phase 5: Debugging UX & Generating Pitch Deck
+**Prompt Excerpt:**
+> "Tôi đang thấy bóc tách thông tin món thì đúng chứ còn giá đang không đúng hóa đơn. Tất cả ảnh chụp từ bài báo chặt chém đều báo là Mua được. Hãy tối ưu repo để BGK chấm 100/100."
+
+**AI Contribution:**
+The AI analyzed the entire repository and discovered a critical logic flaw in `app.js` where `mixed` or `insufficient_data` results from the backend were silently defaulting to a "FAIR PRICE" UI. The AI autonomously refactored the frontend to strictly handle danger/caution/unknown tiers. Finally, the AI acted as a Product Manager, drafting a highly optimized 10-slide Pitch Deck strategy aligned with the VAIC 2026 rubric, and generated high-tech Light Mode visual mockups (Flowchart, Data Flywheel) directly in the workspace.
+
 ## 4. Conclusion
-AI was instrumental not just in coding, but in **Mathematical Modeling** (Median/MAD for anomaly detection) and **Security** (suggesting Rate Limiting and strict CORS). This allowed our team to focus on the UX and product vision, resulting in a production-ready MVP in just 48 hours.
+AI was instrumental not just in coding, but in **Mathematical Modeling** (Median/MAD anomaly detection), **Security** (Data Anti-poisoning), and **Product Strategy** (Pitch Deck synthesis). This autonomous collaboration allowed our team to elevate a simple prototype into a highly defensible, production-ready startup MVP in just 48 hours.
